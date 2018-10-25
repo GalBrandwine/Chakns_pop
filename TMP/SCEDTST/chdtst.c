@@ -49,7 +49,8 @@ SYSCALL schedule(int no_of_pids, int cycle_length, int pid1, ...)
 
 xmain()
 {
-        int uppid, dispid, recvpid;
+        //int uppid, dispid, recvpid;
+		 int p1_pid, p2_pid;
 
        /* resume( dispid = create(displayer, INITSTK, INITPRIO, "DISPLAYER", 0) );
         resume( recvpid = create(receiver, INITSTK, INITPRIO+3, "RECIVEVER", 0) );
