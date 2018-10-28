@@ -1,5 +1,12 @@
 Turbo C++ Version 3.00 Copyright (c) 1992 Borland International
-Error: Could not find file 'XINU4WIN\NEWSRC\GM\CHAKNPOP\chakn_xinu.c'
-Error: Could not find file 'XINU4WIN\NEWSRC\XINU.'
+xinu4win\newsrc\gm\chaknpop\chakn.c:
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 188: 'left_hole' is assigned a value that is never used in function print_stage_1
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 188: 'right_hole' is assigned a value that is never used in function print_stage_1
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 188: 'hole_flag' is assigned a value that is never used in function print_stage_1
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 319: 'no_of_targets' is assigned a value that is never used in function updateter
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 347: Function should return a value in function schedule
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 361: Function should return a value in function xmain
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 361: 'stage_1' is assigned a value that is never used in function xmain
+Turbo Link  Version 5.0 Copyright (c) 1992 Borland International
 
-	Available memory 4184280
+	Available memory 4111676
