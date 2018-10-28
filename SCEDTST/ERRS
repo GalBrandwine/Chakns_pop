@@ -2,10 +2,13 @@ Turbo C++ Version 3.00 Copyright (c) 1992 Borland International
 xinu4win\newsrc\gm\scedtst\txt.c:
 Warning xinu4win\newsrc\gm\scedtst\txt.c 52: Function should return a value in function new_int9
 Warning xinu4win\newsrc\gm\scedtst\txt.c 52: Parameter 'mdevno' is never used in function new_int9
-Warning xinu4win\newsrc\gm\scedtst\txt.c 296: 'no_of_targets' is assigned a value that is never used in function updateter
-Warning xinu4win\newsrc\gm\scedtst\txt.c 324: Function should return a value in function schedule
-Warning xinu4win\newsrc\gm\scedtst\txt.c 338: Function should return a value in function xmain
-Warning xinu4win\newsrc\gm\scedtst\txt.c 338: 'stage_1' is assigned a value that is never used in function xmain
-Turbo Link  Version 5.0 Copyright (c) 1992 Borland International
+Error xinu4win\newsrc\gm\scedtst\txt.c 171: Undefined symbol 'temp_j' in function print_stage_1
+Warning xinu4win\newsrc\gm\scedtst\txt.c 180: 'hole_size' is assigned a value that is never used in function print_stage_1
+Warning xinu4win\newsrc\gm\scedtst\txt.c 180: 'left_hole' is assigned a value that is never used in function print_stage_1
+Warning xinu4win\newsrc\gm\scedtst\txt.c 311: 'no_of_targets' is assigned a value that is never used in function updateter
+Warning xinu4win\newsrc\gm\scedtst\txt.c 339: Function should return a value in function schedule
+Warning xinu4win\newsrc\gm\scedtst\txt.c 353: Function should return a value in function xmain
+Warning xinu4win\newsrc\gm\scedtst\txt.c 353: 'stage_1' is assigned a value that is never used in function xmain
+*** 1 errors in Compile ***
 
-	Available memory 4111676
+	Available memory 4118076
