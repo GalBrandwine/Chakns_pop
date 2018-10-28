@@ -187,10 +187,9 @@ void print ()					//color the background acoording to display_background
  void print_stage_1(){
 	int i,j,temp_j,pos;
 	int hole_flag =	0;
-	int edge_needed_left =1;
-	int edge_needed_right =0;
+	int edge_needed =1;
 	int hole_size = 5;
-	
+	while(1){
 		for(i = 0; i < 25; i++ )
 		{
 			for(j = 0; j < 80; j++)
@@ -198,42 +197,35 @@ void print ()					//color the background acoording to display_background
 				pos = 2*(i*80 + j);
 				// print stage rounding square
 				if( i ==0 || j == 0 || i ==24 || j==79)
-					drawInPosL(pos,display_background[i][j],40);	// rounding wals
-					display_background_color[i][j] = 40;
-
+					drawInPosL(pos,display_background[i][j],40);	// rounding
 				else if (i%4 == 0){		// print floors
 					
-					if (j < hole_size && edge_needed_left == 1 && edge_needed_right == 0){ // set flags for printing only left_hole
+					if (j < hole_size && edge_needed == 1){ // set flags for printing only left_hole
 						drawInPosL(pos,display_background[i][j],147);	// print left hole
 						display_background_color[i][j] = 147;
 						
 					}
+					if (j > hole_size && edge_needed == 1) edge_needed = 0;
 
-					else if (j + hole_size > 80 && edge_needed_left == 0 && edge_needed_right == 1){ // set plags for printing right_hole
-						drawInPosL(pos,display_background[i][j],147);	// print right hole
+					else if (j + hole_size > 80 && edge_needed == 1){ // set plags for printing right_hole
+						drawInPosL(pos,display_background[i][j],59);	// print right hole
 						display_background_color[i][j] = 147;
-						
+						edge_needed = 0;
 					}
 					else{
 						drawInPosL(pos,display_background[i][j],77);
 						display_background_color[i][j] = 77;
 					}
 				}	
-				else{
+				else
 					drawInPosL(pos,display_background[i][j],255);
 					display_background_color[i][j] = 255;
-					}
-
-				if (j == 79 && i%4 == 0){ // make stage 1 patterns (shti va erev)
-					edge_needed_left = 1 - edge_needed_left;
-					edge_needed_right = 1- edge_needed_right;
-				}
 			}
-			
+			edge_needed = 1 - edge_needed;
 			drawChack();
 		}
 		
-	
+	}
  }
 
 

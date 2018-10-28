@@ -59,13 +59,7 @@ asm {
      else
      if ((scan == 4) && (ctrl_pressed == 1)) // Control-C?
         send(butlerpid, MSGDSNAP);
-	else
-     if ((scan == 30)) // 'A' pressed
-       moveChack('L');
-	   else
-     if ((scan == 32)) // 'D' pressed
-       moveChack('R');
-	   
+	
   old9newisr(mdevno);
 
 return 0;
@@ -109,7 +103,7 @@ int gno_of_pids;
  *  New Stuff	New Stuff	New Stuff	New Stuff	New Stuff
  *------------------------------------------------------------------------
  */
-POSITION *chackPosition;
+
 void SetScreen ()
 {
 asm{
@@ -139,25 +133,7 @@ void drawInPosL(int pos,char letter,char att) //draw on screen
 		POP AX
 	}
 }
-void drawChack()
-{
-	display_background[chackPosition->y][chackPosition->x]= '^';
-	display_background[chackPosition->y][chackPosition->x-1]= '(';
-	display_background[chackPosition->y][chackPosition->x+1]= ')';
-}
-moveChack(char side)
-{
-	switch (side)
-	{
-		case 'R':
-		chackPosition->x+=1;
-		break;
-		case 'L':
-		chackPosition->x-=1;
-		break;
-	}
-	drawChack();
-}
+
 void print ()					//color the background acoording to display_background 
 {
 	int i,j,pos;
@@ -187,10 +163,10 @@ void print ()					//color the background acoording to display_background
  void print_stage_1(){
 	int i,j,temp_j,pos;
 	int hole_flag =	0;
-	int edge_needed_left =1;
 	int edge_needed_right =0;
+	int edge_needed_left =1;
 	int hole_size = 5;
-	
+	while(1){
 		for(i = 0; i < 25; i++ )
 		{
 			for(j = 0; j < 80; j++)
@@ -198,19 +174,18 @@ void print ()					//color the background acoording to display_background
 				pos = 2*(i*80 + j);
 				// print stage rounding square
 				if( i ==0 || j == 0 || i ==24 || j==79)
-					drawInPosL(pos,display_background[i][j],40);	// rounding wals
-					display_background_color[i][j] = 40;
-
+					drawInPosL(pos,display_background[i][j],40);	// rounding
 				else if (i%4 == 0){		// print floors
 					
-					if (j < hole_size && edge_needed_left == 1 && edge_needed_right == 0){ // set flags for printing only left_hole
+					
+					if (j < hole_size && edge_needed_left == 1 && edge_needed_right = 0){ // set flags for printing only left_hole
 						drawInPosL(pos,display_background[i][j],147);	// print left hole
 						display_background_color[i][j] = 147;
 						
 					}
 
-					else if (j + hole_size > 80 && edge_needed_left == 0 && edge_needed_right == 1){ // set plags for printing right_hole
-						drawInPosL(pos,display_background[i][j],147);	// print right hole
+					else if (j + hole_size > 80 && edge_needed_right == 1){ // set plags for printing right_hole
+						drawInPosL(pos,display_background[i][j],59);	// print right hole
 						display_background_color[i][j] = 147;
 						
 					}
@@ -219,21 +194,13 @@ void print ()					//color the background acoording to display_background
 						display_background_color[i][j] = 77;
 					}
 				}	
-				else{
+				else
 					drawInPosL(pos,display_background[i][j],255);
 					display_background_color[i][j] = 255;
-					}
-
-				if (j == 79 && i%4 == 0){ // make stage 1 patterns (shti va erev)
-					edge_needed_left = 1 - edge_needed_left;
-					edge_needed_right = 1- edge_needed_right;
-				}
 			}
-			
-			drawChack();
+			if (edge_needed_left = 1) - edge_needed;
 		}
-		
-	
+	}
  }
 
 
@@ -406,9 +373,5 @@ xmain()
 		resume( stage_1 = create(print_stage_1, INITSTK, INITPRIO, "STAGE1", 0) );
         receiver_pid =recvpid;  
         set_new_int9_newisr();
-		chackPosition=(POSITION *)malloc(sizeof(POSITION));
-		chackPosition->x=40;
-		chackPosition->y=13;
-		drawChack();
     schedule(2,57, dispid, 0,  uppid, 29,print_stage_1,30);
 } // xmain
