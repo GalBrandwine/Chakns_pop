@@ -3,4 +3,4 @@
 
 void process2();  /* An example function declaration */
 
-#endif // PROCESS2
+#endif // PROCESS2_H_
