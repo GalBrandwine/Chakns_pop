@@ -165,7 +165,6 @@ void print ()					//color the background acoording to display_background
 	int right_hole = 1;
 	int left_hole = 0;
 	int hole_size = 5;
-	int floors_number =4;
 	while(1){
 		for(i = 0; i < 25; i++ )
 		{
@@ -175,10 +174,11 @@ void print ()					//color the background acoording to display_background
 				// print stage rounding square
 				if( i ==0 || j == 0 || i ==24 || j==79)
 					drawInPosL(pos,display_background[i][j],40);	// rounding
-				else if (i%floors_number == 0){
+				else if (i%4 == 0){
 					hole_flag = 1;
 					if (j > hole_size)
 						drawInPosL(pos,display_background[i][j],80);	// print floors
+
 					}
 				else
 					drawInPosL(pos,display_background[i][j],120);
