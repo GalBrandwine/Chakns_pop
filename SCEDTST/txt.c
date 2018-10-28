@@ -33,7 +33,7 @@ asm {
    MOV BYTE PTR scan,AL
    POP AX
  } //asm
-
+asdsad;
  if (scan == 29)
     ctrl_pressed  = 1;
  else
