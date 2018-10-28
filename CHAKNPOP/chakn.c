@@ -228,8 +228,12 @@ void print ()					//color the background acoording to display_background
 					edge_needed_left = 1 - edge_needed_left;
 					edge_needed_right = 1- edge_needed_right;
 				}
+
+				// print 3 hearts over the stage
+
 			}
 			
+			// print chack once for getting its initialy position.
 			drawChack();
 		}
 		
