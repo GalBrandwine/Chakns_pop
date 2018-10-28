@@ -6,6 +6,7 @@
 #include <bios.h>
 #include <stdio.h>
 #include <math.h>
+#include <butler.h>
 
 extern SYSCALL  sleept(int);
 extern struct intmap far *sys_imp;
@@ -18,38 +19,51 @@ extern struct intmap far *sys_imp;
 #define TARGET_NUMBER 4
 
 int receiver_pid;
+int (*old9newisr)(int);
 
 INTPROC new_int9(int mdevno)
 {
- char result = 0;
+char result;
  int scan = 0;
-  int ascii = 0;
+ static int ctrl_pressed  = 0;
 
 asm {
-  MOV AH,1
-  INT 16h
-  JZ Skip1
-  MOV AH,0
-  INT 16h
-  MOV BYTE PTR scan,AH
-  MOV BYTE PTR ascii,AL
+   PUSH AX
+   IN AL,60h
+   MOV BYTE PTR scan,AL
+   POP AX
  } //asm
- if (scan == 75)
-   result = 'a';
+
+ if (scan == 29)
+    ctrl_pressed  = 1;
  else
-   if (scan == 72)
-     result = 'w';
-   else
-   if (scan == 77)
-      result = 'd';
- if ((scan == 46)&& (ascii == 3)) // Ctrl-C?
-   asm INT 27; // terminate xinu
+   if (scan == 157)
+     ctrl_pressed  = 0;
+   else  
+     if ((scan == 46) && (ctrl_pressed == 1)) // Control-C?
+     {
+		 // Part1: Initialize the display adapter
+		asm{
+			MOV              AH, 0// Select function = 'Set mode'
+			MOV              AL, 2// restore the display mode
+			INT              10h// Adapter initialized.Page 0 displayed
+			INT 27
+		}
+     } // if
+     else
+     if ((scan == 2) && (ctrl_pressed == 1)) // Control-C?
+        send(butlerpid, MSGPSNAP);
+     else
+     if ((scan == 3) && (ctrl_pressed == 1)) // Control-C?
+        send(butlerpid, MSGTSNAP);
+     else
+     if ((scan == 4) && (ctrl_pressed == 1)) // Control-C?
+        send(butlerpid, MSGDSNAP);
+	
+  old9newisr(mdevno);
 
-   send(receiver_pid, result); 
-
-Skip1:
-
-} // new_int9
+return 0;
+}
 
 void set_new_int9_newisr()
 {
@@ -57,6 +71,7 @@ void set_new_int9_newisr()
   for(i=0; i < 32; i++)
     if (sys_imp[i].ivec == 9)
     {
+		old9newisr = sys_imp[i].newisr;
      sys_imp[i].newisr = new_int9;
      return;
     }
@@ -145,9 +160,9 @@ void print ()					//color the background acoording to display_background
  *------------------------------------------------------------------------
  */
  void print_stage_1(){
-	int i,j,pos;
+	int i,j,temp_j,pos;
 	int hole_flag =	0;
-	int right_hole = 0;
+	int right_hole = 1;
 	int left_hole = 0;
 	int hole_size = 5;
 	while(1){
@@ -161,19 +176,12 @@ void print ()					//color the background acoording to display_background
 					drawInPosL(pos,display_background[i][j],40);	// rounding
 				else if (i%4 == 0){
 					hole_flag = 1;
-					drawInPosL(pos,display_background[i][j],80);	// print floors
+					if (j > hole_size)
+						drawInPosL(pos,display_background[i][j],80);	// print floors
+
 					}
 				else
 					drawInPosL(pos,display_background[i][j],120);
-
-				if (hole_flag == 1){
-					if(right_hole == 1){		// print floor holes
-						for(temp_j = 80; temp_j < 80 - hole_size; temp_j--)
-						{
-							drawInPosL(pos,display_background[i][temp_j],0);	// print floors
-						}
-					}
-				}
 			}
 		}
 	}
