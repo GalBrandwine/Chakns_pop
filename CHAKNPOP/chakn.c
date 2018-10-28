@@ -89,6 +89,7 @@ typedef struct position
 char display[2001];			//char
 char display_color[2001];	//Color
 char display_background [25][80]; //level design
+char display_background_color [25][80]; //level design color, for sampeling where the items are in the screen
 
 char ch_arr[2048];
 int front = -1;
@@ -162,8 +163,7 @@ void print ()					//color the background acoording to display_background
  void print_stage_1(){
 	int i,j,temp_j,pos;
 	int hole_flag =	0;
-	int right_hole = 1;
-	int left_hole = 0;
+	int edge_needed =1;
 	int hole_size = 5;
 	while(1){
 		for(i = 0; i < 25; i++ )
@@ -174,15 +174,28 @@ void print ()					//color the background acoording to display_background
 				// print stage rounding square
 				if( i ==0 || j == 0 || i ==24 || j==79)
 					drawInPosL(pos,display_background[i][j],40);	// rounding
-				else if (i%4 == 0){
-					hole_flag = 1;
-					if (j > hole_size)
-						drawInPosL(pos,display_background[i][j],80);	// print floors
-
+				else if (i%4 == 0){		// print floors
+					
+					if (j < hole_size && edge_needed == 1){ // set flags for printing only left_hole
+						drawInPosL(pos,display_background[i][j],147);	// print left hole
+						display_background_color[i][j] = 147;
 					}
+
+
+					if (j + hole_size > 80 && edge_needed == 0){ // set plags for printing right_hole
+						drawInPosL(pos,display_background[i][j],147);	// print right hole
+						display_background_color[i][j] = 147;
+					}
+					else{
+						drawInPosL(pos,display_background[i][j],65);
+						display_background_color[i][j] = 65;
+					}
+				}	
 				else
-					drawInPosL(pos,display_background[i][j],120);
+					drawInPosL(pos,display_background[i][j],255);
+					edge_needed = 1 - edge_needed;
 			}
+			
 		}
 	}
  }
