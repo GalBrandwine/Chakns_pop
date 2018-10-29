@@ -150,15 +150,16 @@ int gno_of_pids;
  */
 POSITION *chackPosition;
 CHACK *chack;
+
 void SetScreen ()
 {
-asm{
-	PUSH AX
-	MOV AH,0 //Select function = 'SET MODE'
-	MOV AL,3 //80 BY 25 Color image
-	INT 10H  //Adapter initilizedD. Page 0 displayed
-	POP AX
-}
+	asm{
+		PUSH AX
+		MOV AH,0 //Select function = 'SET MODE'
+		MOV AL,3 //80 BY 25 Color image
+		INT 10H  //Adapter initilizedD. Page 0 displayed
+		POP AX
+	}
 } // SetScreen
 
 void drawInPosL(int pos,char letter,char att) //draw on screen
@@ -261,7 +262,7 @@ void move_chicken(CHICKEN *chicken_input){ // move chicken by stage setup.
 void draw_chicken(CHICKEN *chicken_input){
 	CHICKEN *chicken = chicken_input;	// dave initiated chicken;
 	while (1){
-		sleept(1);
+		sleept(1);	// replace with 70hexa flags
 		display_background[chicken->position.y][chicken->position.x]= ' ';
 		display_background[chicken->position.y][chicken->position.x-1]= ' ';
 		display_background[chicken->position.y][chicken->position.x+1]= ' ';
