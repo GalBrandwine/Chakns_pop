@@ -1,12 +1,11 @@
 Turbo C++ Version 3.00 Copyright (c) 1992 Borland International
 xinu4win\newsrc\gm\chaknpop\chakn.c:
 Warning xinu4win\newsrc\gm\chaknpop\chakn.c 160: Function should return a value in function moveChack
-Error xinu4win\newsrc\gm\chaknpop\chakn.c 204: Misplaced else in function print_stage_1
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 237: 'hole_flag' is assigned a value that is never used in function print_stage_1
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 368: 'no_of_targets' is assigned a value that is never used in function updateter
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 396: Function should return a value in function schedule
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 414: Function should return a value in function xmain
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 414: 'stage_1' is assigned a value that is never used in function xmain
-*** 1 errors in Compile ***
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 248: 'hole_flag' is assigned a value that is never used in function print_stage_1
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 379: 'no_of_targets' is assigned a value that is never used in function updateter
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 407: Function should return a value in function schedule
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 425: Function should return a value in function xmain
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 425: 'stage_1' is assigned a value that is never used in function xmain
+Turbo Link  Version 5.0 Copyright (c) 1992 Borland International
 
-	Available memory 4116972
+	Available memory 4109548

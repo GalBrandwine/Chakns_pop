@@ -92,6 +92,35 @@ typedef struct position
 
 }  POSITION;
 
+
+/*------------------------------------------------------------------------
+/* Game characters 
+ *------------------------------------------------------------------------
+ */
+typedef struct chack
+{
+	char *name;	// user can set Chack's name in MENU scren.
+	int score;
+	int life;	// Life must be above 0
+	int 
+	POSITION position;
+} CHACK
+
+typedef struct chicken
+{
+	int level; // checken level will define how fast eggs are being layed.
+	POSITION position;
+} CHICKEN
+
+typedef struct monster
+{
+	int alive;	// alive is a boolean flag, it is set to true when moster is born out of egg, and set to FALSE when monster entered to granade smoke.
+	POSITION position;
+}
+
+
+
+
 char display[2001];			//char
 char display_color[2001];	//Color
 char display_background [25][80]; //level design
@@ -190,6 +219,7 @@ void print ()					//color the background acoording to display_background
 	int edge_needed_left =1;
 	int edge_needed_right =0;
 	int hole_size = 5;
+	int number_of_hearts = 3;
 	
 		for(i = 0; i < 25; i++ )
 		{
@@ -197,10 +227,10 @@ void print ()					//color the background acoording to display_background
 			{
 				pos = 2*(i*80 + j);
 				// print stage rounding square
-				if( i ==0 || j == 0 || i ==24 || j==79)
+				if( i ==0 || j == 0 || i ==24 || j==79){
 					drawInPosL(pos,display_background[i][j],40);	// rounding wals
 					display_background_color[i][j] = 40;
-
+				}
 				else if (i%4 == 0){		// print floors
 					
 					if (j < hole_size && edge_needed_left == 1 && edge_needed_right == 0){ // set flags for printing only left_hole
@@ -228,11 +258,17 @@ void print ()					//color the background acoording to display_background
 					edge_needed_left = 1 - edge_needed_left;
 					edge_needed_right = 1- edge_needed_right;
 				}
-
-				// print 3 hearts over the stage
-
+			}
+			// print 3 hearts over the stage
+			if (i%4==2 &&number_of_hearts > 0){
+				display_background[i][j+number_of_hearts*8 -1] = '<';
+				display_background_color[i][j+number_of_hearts*8-1] = 160;
+				display_background[i][j+number_of_hearts*8] = 'B';
+				display_background_color[i][j+number_of_hearts*8] = 160;
+				number_of_hearts--;
 			}
 			
+
 			// print chack once for getting its initialy position.
 			drawChack();
 		}
