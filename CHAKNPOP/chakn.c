@@ -10,17 +10,19 @@
 
 extern SYSCALL  sleept(int);
 extern struct intmap far *sys_imp;
+#define WALL_COLOR 40
+#define EMPTY_SPACE 120
+#define NUMOFLIFES 3
+#define HEARTCOLLOR 65
 /*------------------------------------------------------------------------
  *  xmain  --  example of 2 processes executing the same code concurrently
  *------------------------------------------------------------------------
  */
 
-#define ARROW_NUMBER 5
-#define TARGET_NUMBER 4
 
 int receiver_pid;
 int (*old9newisr)(int);
-
+ int uppid, dispid, recvpid, stage_1_pid;
 INTPROC new_int9(int mdevno)
 {
 char result;
@@ -65,8 +67,14 @@ asm {
 	   else
      if ((scan == 32)) // 'D' pressed
        moveChack('R');
+	    else
+     if ((scan == 17)) // 'W' pressed
+       moveChack('U');
+	      else
+     if ((scan == 31)) // 'S' pressed
+       moveChack('D');
 	   
-  old9newisr(mdevno);
+ // old9newisr(mdevno);
 
 return 0;
 }
@@ -101,7 +109,7 @@ typedef struct chack
 {
 	char *name;	// user can set Chack's name in MENU scren.
 	int score;
-	int life;	// Life must be above 0
+	int life;	// Life must be above 0, initiates with  NUMOFLIFES
 	POSITION position;
 } CHACK;
 
@@ -138,6 +146,7 @@ int gno_of_pids;
  *------------------------------------------------------------------------
  */
 POSITION *chackPosition;
+CHACK *chack;
 void SetScreen ()
 {
 asm{
@@ -169,44 +178,102 @@ void drawInPosL(int pos,char letter,char att) //draw on screen
 }
 void drawChack()
 {
-	display_background[chackPosition->y][chackPosition->x]= '^';
-	display_background[chackPosition->y][chackPosition->x-1]= '(';
-	display_background[chackPosition->y][chackPosition->x+1]= ')';
+	display_background[chack->position.y][chack->position.x]= '^';
+	display_background[chack->position.y][chack->position.x-1]= '(';
+	display_background[chack->position.y][chack->position.x+1]= ')';
+	send(dispid,1);
 }
 moveChack(char side)
 {
+	
+	display_background[chack->position.y][chack->position.x]= ' ';
+	display_background[chack->position.y][chack->position.x-1]= ' ';
+	display_background[chack->position.y][chack->position.x+1]= ' ';
+	
 	switch (side)
 	{
-		case 'R':
-		chackPosition->x+=1;
+		case 'R'://move  right
+		if(display_background_color[chack->position.y][(chack->position.x+1)] != 40)//if its not green wall
+		{
+			chack->position.x = (chack->position.x+1)%80;
+		}
+		
 		break;
-		case 'L':
-		chackPosition->x-=1;
+		case 'L'://move left
+		if(display_background_color[chack->position.y][(chack->position.x-1)] != 40)//if its not green wall
+		{
+			chack->position.x = (chack->position.x-1)%80;
+		}
 		break;
+		case 'U'://move up
+		if(display_background_color[chack->position.y-1][(chack->position.x)] != 77)//if its not red wall
+		{
+			chack->position.y = (chack->position.y-1)%25;
+		}
+		break;
+		case 'D'://move down
+		if(display_background_color[chack->position.y+1][(chack->position.x)] != 77)//if its not red wall
+		{
+			chack->position.y = (chack->position.y+1)%25;
+		}
+		break;
+	}
+	while((display_background_color[chack->position.y+1][(chack->position.x)]!= 77) && (display_background_color[chack->position.y+1][(chack->position.x)] != 40))
+	{
+		display_background[chack->position.y][chack->position.x]= ' ';
+		display_background[chack->position.y][chack->position.x-1]= ' ';
+		display_background[chack->position.y][chack->position.x+1]= ' ';
+		chack->position.y = (chack->position.y+1);
+		
+		drawChack();
 	}
 	drawChack();
 }
-void print ()					//color the background acoording to display_background 
-{
-	int i,j,pos;
-	for(i = 0; i < 25; i++ )
+void move_chicken(CHICKEN *chicken_input){ // move chicken by stage setup.
+	CHICKEN *chicken = chicken_input;
+	static int direction = 0;	// 0 - move left, 1 - move right
+	int temp_x;
+	int temp_y;
+
+	if(direction == 0 && display_background_color[chicken->position.y][(chicken->position.x+1)] != 40)//if its not green wall
 	{
-		for(j = 0; j < 80; j++)
-		{
-			pos = 2*(i*80 + j);
-			//printf("%c",display[pos/2]);
-			//drawInPosL(pos,display_background[pos/2],display_color[pos/2]);
-			if((j % 2) ==0)
-				drawInPosL(pos,display_background[i][j],j);
-			else
-				drawInPosL(pos,display_background[i][j],120);
-		}
+		chicken->position.x = (chicken->position.x+1)%80;
+		if((chicken->position.x+1)%80 == 79)direction =1;	// change sirection
+	}		
+	if(direction == 1 && display_background_color[chicken->position.y][(chicken->position.x-1)] != 40)//if its not green wall
+	{
+		chicken->position.x = (chicken->position.x-1)%80;
+		if((chicken->position.x) == 1)direction =0;	// change sirection
 	}
+	if(display_background_color[chicken->position.y-1][(chicken->position.x)] != 77)//if its not red wall
+	{
+		chicken->position.y = (chicken->position.y-1)%25;
+	}
+	if(display_background_color[chicken->position.y+1][(chicken->position.x)] != 77)//if its not red wall
+	{
+		chicken->position.y = (chicken->position.y+1)%25;
+	}
+}
+
+void draw_chicken(CHICKEN *chicken_input){
+	CHICKEN *chicken = chicken_input;	// dave initiated chicken;
+	while (1){
+		sleept(1);
+		display_background[chicken->position.y][chicken->position.x]= ' ';
+		display_background[chicken->position.y][chicken->position.x-1]= ' ';
+		display_background[chicken->position.y][chicken->position.x+1]= ' ';
+		move_chicken(chicken);
+		display_background[chicken->position.y][chicken->position.x]= '^';
+		display_background[chicken->position.y][chicken->position.x-1]= '^';
+		display_background[chicken->position.y][chicken->position.x+1]= '=';
+		send(dispid,1);
+		}
 }
 /*------------------------------------------------------------------------
  *  prntr  --  print a character indefinitely
  *------------------------------------------------------------------------
  */
+
 
  /*------------------------------------------------------------------------
  *  stage_1  --  print stage 1 hard_coded
@@ -226,33 +293,28 @@ void print ()					//color the background acoording to display_background
 			{
 				pos = 2*(i*80 + j);
 				// print stage rounding square
-				if( i ==0 || j == 0 || i ==24 || j==79){
-					drawInPosL(pos,display_background[i][j],40);	// rounding wals
-					display_background_color[i][j] = 40;
+				if( i ==0 || j == 0 || i ==24 || j==79)
+				{
+					display_background_color[i][j] = WALL_COLOR;
 				}
 				else if (i%4 == 0){		// print floors
 					
 					if (j < hole_size && edge_needed_left == 1 && edge_needed_right == 0){ // set flags for printing only left_hole
-						drawInPosL(pos,display_background[i][j],147);	// print left hole
-						display_background_color[i][j] = 147;
+						display_background_color[i][j] = EMPTY_SPACE;
 						
 					}
 
 					else if (j + hole_size > 80 && edge_needed_left == 0 && edge_needed_right == 1){ // set plags for printing right_hole
-						drawInPosL(pos,display_background[i][j],147);	// print right hole
-						display_background_color[i][j] = 147;
+						display_background_color[i][j] = EMPTY_SPACE;
 						
 					}
 					else{
-						drawInPosL(pos,display_background[i][j],77);
-						display_background_color[i][j] = 77;
+						display_background_color[i][j] = WALL_COLOR;
 					}
 				}	
 				else{
-					drawInPosL(pos,display_background[i][j],255);
-					display_background_color[i][j] = 255;
-					}
-
+					display_background_color[i][j] = EMPTY_SPACE;
+			}
 				if (j == 79 && i%4 == 0){ // make stage 1 patterns (shti va erev)
 					edge_needed_left = 1 - edge_needed_left;
 					edge_needed_right = 1- edge_needed_right;
@@ -263,58 +325,64 @@ void print ()					//color the background acoording to display_background
 			// by the function: pos = 2*(i*80 + j);
 			// heart 1
 			display_background[7][9] = '<';
-			display_background_color[7][9] = '<';
-			pos = 2*(7*80 + 9);
-			drawInPosL(pos,display_background[7][9],65);
-			display_background[7][9] = ' ';	// after printing to screen, reset stage array in this specific location.
+			display_background_color[7][9] = HEARTCOLLOR;
 			
 			display_background[7][10] = 'B';
-			pos = 2*(7*80 + 10);
-			drawInPosL(pos,display_background[7][10],65);
-			display_background_color[7][10] = 'B';
-			display_background[7][10] = ' ';	// after printing to screen, reset stage array in this specific location.
+			display_background_color[7][10] = HEARTCOLLOR;
 
 			// heart 2
 			display_background[15][55] = '<';
-			display_background_color[15][55] = '<';
-			pos = 2*(15*80 + 55);
-			drawInPosL(pos,display_background[15][55],65);
-			display_background[15][55] = ' ';	// after printing to screen, reset stage array in this specific location.
+			display_background_color[15][55] = HEARTCOLLOR;
 			
 			display_background[15][56] = 'B';
-			pos = 2*(15*80 + 56);
-			drawInPosL(pos,display_background[15][56],65);
-			display_background_color[15][56] = 'B';
-			display_background[15][56] = ' ';	// after printing to screen, reset stage array in this specific location.
+			display_background_color[15][56] = HEARTCOLLOR;
 			
 			// heart 3
 			display_background[19][9] = '<';
-			display_background_color[19][9] = '<';
-			pos = 2*(19*80 + 9);
-			drawInPosL(pos,display_background[19][9],65);
-			display_background[19][9] = ' ';	// after printing to screen, reset stage array in this specific location.
+			display_background_color[19][9] = HEARTCOLLOR;
 			
 			display_background[19][10] = 'B';
-			pos = 2*(19*80 + 10);
-			drawInPosL(pos,display_background[19][10],65);
-			display_background_color[19][10] = 'B';
-			display_background[19][10] = ' ';	// after printing to screen, reset stage array in this specific location.
+			display_background_color[19][10] = HEARTCOLLOR;
+	
 			
-			// print chack once for getting its initialy position.
 			drawChack();
 		}
-		
-	
+		send(dispid,1);
  }
 
+  void stage_1(){
+	// create a chicken.
+	CHICKEN *chicken;
+	POSITION *chickenPosition;
+	int chicken_pid;
+	
+	print_stage_1();	// print stage on the screen
+	 
+	 // initiate chicken.
+	chickenPosition=(POSITION *)malloc(sizeof(POSITION));
+	chickenPosition->x=7;
+	chickenPosition->y=2;
+	chicken->position=*chackPosition;
+
+	resume( chicken_pid = create(draw_chicken, INITSTK, INITPRIO, "CHICKEN_DRAWER", 1, chicken) );
+
+
+ }
 
 void displayer( void )
-{
+{	//This process display the matrix, receive message (and return to ready) with every change in the screen matrix
+	int i,j,pos;
 	while (1)
          {
                receive();
-               //sleept(18);
-              // printf(display);
+			   for(i=0;i<25;i++)
+			   {
+				   for(j=0;j<80;j++)
+				   {
+					   pos = 2*(i*80 + j);
+					   drawInPosL(pos,display_background[i][j],display_background_color[i][j]);	// display the whole screen
+				   }
+			   }
          } //while
 } // prntr
 
@@ -328,17 +396,10 @@ void receiver()
     ch_arr[rear] = temp;
     if (front == -1)
        front = 0;
-    //getc(CONSOLE);
   } // while
-
 } //  receiver
 
-
-char display_draft[25][80];
-POSITION target_pos[TARGET_NUMBER];
-POSITION arrow_pos[ARROW_NUMBER];
-
-
+/*
 void updateter()
 {
 
@@ -437,6 +498,7 @@ void updateter()
   } // while(1)
 
 } // updater 
+*/
 
 int sched_arr_pid[5] = {-1};
 int sched_arr_int[5] = {-1};
@@ -468,18 +530,21 @@ SYSCALL schedule(int no_of_pids, int cycle_length, int pid1, ...)
 
 xmain()
 {
-        int uppid, dispid, recvpid, stage_1;
+       
 		SetScreen();		//intiate screen mode
 		//print();
         resume( dispid = create(displayer, INITSTK, INITPRIO, "DISPLAYER", 0) );
         resume( recvpid = create(receiver, INITSTK, INITPRIO+3, "RECIVEVER", 0) );
-        resume( uppid = create(updateter, INITSTK, INITPRIO, "UPDATER", 0) );
-		resume( stage_1 = create(print_stage_1, INITSTK, INITPRIO, "STAGE1", 0) );
+       // resume( uppid = create(updateter, INITSTK, INITPRIO, "UPDATER", 0) );
+		resume( stage_1_pid = create(stage_1, INITSTK, INITPRIO, "STAGE1", 0) );
         receiver_pid =recvpid;  
         set_new_int9_newisr();
+		
 		chackPosition=(POSITION *)malloc(sizeof(POSITION));
-		chackPosition->x=40;
-		chackPosition->y=13;
-		drawChack();
-    schedule(2,57, dispid, 0,  uppid, 29,print_stage_1,30);
+		chackPosition->x=7;
+		chackPosition->y=2;
+		chack->position=*chackPosition;
+		chack->life = NUMOFLIFES;
+
+    schedule(2,57, dispid, 0,  uppid, 29,stage_1_pid,30);
 } // xmain
