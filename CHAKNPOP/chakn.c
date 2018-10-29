@@ -14,6 +14,7 @@ extern struct intmap far *sys_imp;
 #define EMPTY_SPACE 120
 #define NUMOFLIFES 3
 #define HEARTCOLLOR 65
+
 /*------------------------------------------------------------------------
  *  xmain  --  example of 2 processes executing the same code concurrently
  *------------------------------------------------------------------------
@@ -110,6 +111,7 @@ typedef struct chack
 	char *name;	// user can set Chack's name in MENU scren.
 	int score;
 	int life;	// Life must be above 0, initiates with  NUMOFLIFES
+	int gravity; // 0 means standing on floor, 1 means standing on floor
 	POSITION position;
 } CHACK;
 
@@ -122,6 +124,7 @@ typedef struct chicken
 typedef struct monster
 {
 	int alive;	// alive is a boolean flag, it is set to true when moster is born out of egg, and set to FALSE when monster entered to granade smoke.
+	int gravity; // 0 means standing on floor, 1 means standing on floor
 	POSITION position;
 }MONSTER;
 
