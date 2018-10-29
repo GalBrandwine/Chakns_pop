@@ -102,21 +102,20 @@ typedef struct chack
 	char *name;	// user can set Chack's name in MENU scren.
 	int score;
 	int life;	// Life must be above 0
-	int 
 	POSITION position;
-} CHACK
+} CHACK;
 
 typedef struct chicken
 {
 	int level; // checken level will define how fast eggs are being layed.
 	POSITION position;
-} CHICKEN
+} CHICKEN;
 
 typedef struct monster
 {
 	int alive;	// alive is a boolean flag, it is set to true when moster is born out of egg, and set to FALSE when monster entered to granade smoke.
 	POSITION position;
-}
+}MONSTER;
 
 
 
@@ -259,16 +258,47 @@ void print ()					//color the background acoording to display_background
 					edge_needed_right = 1- edge_needed_right;
 				}
 			}
-			// print 3 hearts over the stage
-			if (i%4==2 &&number_of_hearts > 0){
-				display_background[i][j+number_of_hearts*8 -1] = '<';
-				display_background_color[i][j+number_of_hearts*8-1] = 160;
-				display_background[i][j+number_of_hearts*8] = 'B';
-				display_background_color[i][j+number_of_hearts*8] = 160;
-				number_of_hearts--;
-			}
-			
 
+			// Print stage hearts.
+			// heart 1
+			display_background[7][9] = '<';
+			display_background_color[7][9] = '<';
+			pos = 1150;
+			drawInPosL(pos,display_background[7][9],65);
+			display_background[7][9] = ' ';	// after printing to screen, reset stage array in this specific location.
+			
+			display_background[7][10] = 'B';
+			pos = 1152;
+			drawInPosL(pos,display_background[7][10],65);
+			display_background_color[7][10] = 'B';
+			display_background[7][10] = ' ';	// after printing to screen, reset stage array in this specific location.
+
+			// heart 2
+			display_background[15][55] = '<';
+			display_background_color[15][55] = '<';
+			pos = 2510;
+			drawInPosL(pos,display_background[15][55],65);
+			display_background[15][55] = ' ';	// after printing to screen, reset stage array in this specific location.
+			
+			display_background[15][56] = 'B';
+			pos = 2512;
+			drawInPosL(pos,display_background[15][56],65);
+			display_background_color[15][56] = 'B';
+			display_background[15][56] = ' ';	// after printing to screen, reset stage array in this specific location.
+			
+			// heart 3
+			display_background[19][9] = '<';
+			display_background_color[19][9] = '<';
+			pos = 3058;
+			drawInPosL(pos,display_background[19][9],65);
+			display_background[19][9] = ' ';	// after printing to screen, reset stage array in this specific location.
+			
+			display_background[19][10] = 'B';
+			pos = 3060;
+			drawInPosL(pos,display_background[19][10],65);
+			display_background_color[19][10] = 'B';
+			display_background[19][10] = ' ';	// after printing to screen, reset stage array in this specific location.
+			
 			// print chack once for getting its initialy position.
 			drawChack();
 		}
