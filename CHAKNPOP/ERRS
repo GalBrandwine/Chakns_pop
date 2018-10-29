@@ -1,12 +1,12 @@
 Turbo C++ Version 3.00 Copyright (c) 1992 Borland International
 xinu4win\newsrc\gm\chaknpop\chakn.c:
 Warning xinu4win\newsrc\gm\chaknpop\chakn.c 188: Function should return a value in function moveChack
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 307: 'number_of_hearts' is assigned a value that is never used in function print_stage_1
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 307: 'hole_flag' is assigned a value that is never used in function print_stage_1
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 438: 'no_of_targets' is assigned a value that is never used in function updateter
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 466: Function should return a value in function schedule
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 484: Function should return a value in function xmain
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 484: 'stage_1' is assigned a value that is never used in function xmain
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 308: 'number_of_hearts' is assigned a value that is never used in function print_stage_1
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 308: 'hole_flag' is assigned a value that is never used in function print_stage_1
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 439: 'no_of_targets' is assigned a value that is never used in function updateter
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 467: Function should return a value in function schedule
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 485: Function should return a value in function xmain
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 485: 'stage_1' is assigned a value that is never used in function xmain
 Turbo Link  Version 5.0 Copyright (c) 1992 Borland International
 
 	Available memory 4109036

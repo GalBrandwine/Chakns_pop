@@ -260,15 +260,16 @@ void print ()					//color the background acoording to display_background
 			}
 
 			// Print stage hearts.
+			// by the function: pos = 2*(i*80 + j);
 			// heart 1
 			display_background[7][9] = '<';
 			display_background_color[7][9] = '<';
-			pos = 1150;
+			pos = 2*(7*80 + 9);
 			drawInPosL(pos,display_background[7][9],65);
 			display_background[7][9] = ' ';	// after printing to screen, reset stage array in this specific location.
 			
 			display_background[7][10] = 'B';
-			pos = 1152;
+			pos = 2*(7*80 + 10);
 			drawInPosL(pos,display_background[7][10],65);
 			display_background_color[7][10] = 'B';
 			display_background[7][10] = ' ';	// after printing to screen, reset stage array in this specific location.
@@ -276,12 +277,12 @@ void print ()					//color the background acoording to display_background
 			// heart 2
 			display_background[15][55] = '<';
 			display_background_color[15][55] = '<';
-			pos = 2510;
+			pos = 2*(15*80 + 55);
 			drawInPosL(pos,display_background[15][55],65);
 			display_background[15][55] = ' ';	// after printing to screen, reset stage array in this specific location.
 			
 			display_background[15][56] = 'B';
-			pos = 2512;
+			pos = 2*(15*80 + 56);
 			drawInPosL(pos,display_background[15][56],65);
 			display_background_color[15][56] = 'B';
 			display_background[15][56] = ' ';	// after printing to screen, reset stage array in this specific location.
@@ -289,12 +290,12 @@ void print ()					//color the background acoording to display_background
 			// heart 3
 			display_background[19][9] = '<';
 			display_background_color[19][9] = '<';
-			pos = 3058;
+			pos = 2*(19*80 + 9);
 			drawInPosL(pos,display_background[19][9],65);
 			display_background[19][9] = ' ';	// after printing to screen, reset stage array in this specific location.
 			
 			display_background[19][10] = 'B';
-			pos = 3060;
+			pos = 2*(19*80 + 10);
 			drawInPosL(pos,display_background[19][10],65);
 			display_background_color[19][10] = 'B';
 			display_background[19][10] = ' ';	// after printing to screen, reset stage array in this specific location.
