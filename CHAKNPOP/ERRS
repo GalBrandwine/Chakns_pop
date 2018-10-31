@@ -1,13 +1,18 @@
 Turbo C++ Version 3.00 Copyright (c) 1992 Borland International
 xinu4win\newsrc\gm\chaknpop\chakn.c:
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 80: Parameter 'mdevno' is never used in function new_int9
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 231: Function should return a value in function moveChack
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 351: 'number_of_hearts' is assigned a value that is never used in function print_stage_1
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 351: 'hole_flag' is assigned a value that is never used in function print_stage_1
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 351: 'pos' is assigned a value that is never used in function print_stage_1
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 370: 'chicken_pid' is assigned a value that is never used in function stage_1
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 529: Function should return a value in function schedule
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 550: Function should return a value in function xmain
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 125: Parameter 'mdevno' is never used in function new_int9
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 279: Function should return a value in function moveChack
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 316: 'falling_speed' is assigned a value that is never used in function lay_egg
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 386: 'fall_time' is assigned a value that is never used in function draw_chicken
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 386: 'eggs_layed' is assigned a value that is never used in function draw_chicken
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 461: 'number_of_hearts' is assigned a value that is never used in function print_stage_1
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 461: 'hole_flag' is assigned a value that is never used in function print_stage_1
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 461: 'pos' is assigned a value that is never used in function print_stage_1
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 479: 'chicken_pid' is assigned a value that is never used in function stage_1
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 537: Function should return a value in function schedule
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 545: Nonportable pointer conversion in function xmain
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 628: Function should return a value in function xmain
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 628: 'local_flag' is assigned a value that is never used in function xmain
 Turbo Link  Version 5.0 Copyright (c) 1992 Borland International
 
-	Available memory 4112540
+	Available memory 4119940

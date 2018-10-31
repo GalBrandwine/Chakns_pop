@@ -5,22 +5,66 @@
 #include <io.h>
 #include <bios.h>
 #include <stdio.h>
-#include <math.h>
+#include <sleep.h>
 #include <butler.h>
 
+
 extern SYSCALL  sleept(int);
+extern SYSCALL	resched();
 extern struct intmap far *sys_imp;
 #define WALL_COLOR 40
 #define EMPTY_SPACE 120
 #define NUMOFLIFES 3
 #define HEARTCOLLOR 65
+#define MAX_MONSTERS 10
+
+
+
+
+/*------------------------------------------------------------------------
+ *  new0x70isr  --  for controlling tiiming of the game.
+ *------------------------------------------------------------------------
+ */
+ volatile int global_flag;
+ volatile int global_timer =0 ;
+void interrupt (*old0x70isr)(void);
+
+void interrupt new0x70isr(void)
+{
+  global_flag = 1;
+  global_timer++;
+  asm {
+   PUSH AX
+   PUSH BX
+   IN AL,70h   // Read existing port 70h
+   MOV BX,AX
+
+   MOV AL,0Ch  // Set up "Read status register C"
+   OUT 70h,AL  //
+   MOV AL,8Ch  //
+   OUT 70h,AL  //
+   IN AL,71h
+   MOV AX,BX   //  Restore port 70h
+   OUT 70h,AL  // 
+
+   MOV AL,20h   // Set up "EOI" value  
+   OUT 0A0h,AL  // Notify Secondary PIC
+   OUT 020h,AL  // Notify Primary PIC
+
+   POP BX
+   POP AX
+
+  } // asm */
+
+
+} // new0x70isr
+
+
 
 /*------------------------------------------------------------------------
  *  xmain  --  example of 2 processes executing the same code concurrently
  *------------------------------------------------------------------------
  */
-
-
 int receiver_pid;
 int (*old9newisr)(int);
  int uppid, dispid, recvpid, stage_1_pid;
@@ -130,7 +174,7 @@ typedef struct monster
 
 
 
-
+MONSTER monsters[MAX_MONSTERS];
 char display[2001];			//char
 char display_color[2001];	//Color
 char display_background [25][80]; //level design
@@ -233,6 +277,44 @@ moveChack(char side)
 	}
 	drawChack();
 }
+void lay_egg(int init_egg_laying_position_y, int init_egg_laying_position_x){
+	/* Function for laying eggs.
+		
+	each egg is  a procces that will bocome a monster.
+	*/
+
+	int fall_time = global_timer%30;
+	int falling_speed = 1000;
+	int temp_x = init_egg_laying_position_x;
+	int temp_y = init_egg_laying_position_y;
+	while (1){
+		if (global_timer%1000 == 0){
+		//display_background[init_egg_laying_position_y][init_egg_laying_position_x] = '*';
+
+			display_background[temp_y][temp_x] = ' ';
+			temp_y ++;
+			display_background[temp_y][temp_x] = '*';
+			fall_time--;
+			send(dispid,1);
+		}
+		if (fall_time <= 0) {
+			// fall time is over, egg should lay on the floor (GREEN) for x secons and become a monster.
+			break;
+		}
+	}
+	// fall until egg hit breen ground.
+	while(display_background_color[temp_y+1][temp_x] != 40){
+		display_background[temp_y][temp_x] = ' ';
+		temp_y ++;
+		display_background[temp_y][temp_x] = '*';
+	}
+	sleep(3);
+	// make egg a monster, and start mooving it my AVIV'S move_monster() func.
+	display_background[temp_y][temp_x-1] = '(';
+	display_background[temp_y][temp_x] = '*';
+	display_background[temp_y][temp_x+1] = ')';
+}
+
 void move_chicken(CHICKEN *chicken_input){ // move chicken by stage setup.
 	CHICKEN *chicken = chicken_input;
 	static int direction = 0;	// 0 - move left, 1 - move right
@@ -260,24 +342,48 @@ void move_chicken(CHICKEN *chicken_input){ // move chicken by stage setup.
 }
 
 void draw_chicken(CHICKEN *chicken_input){
-	CHICKEN *chicken = chicken_input;	// dave initiated chicken;
-	while (1){
-		sleept(1);	// replace with 70hexa flags
-		display_background[chicken->position.y][chicken->position.x]= ' ';
-		display_background[chicken->position.y][chicken->position.x-1]= ' ';
-		display_background[chicken->position.y][chicken->position.x+1]= ' ';
-		move_chicken(chicken);
-		display_background[chicken->position.y][chicken->position.x]= '^';
-		display_background[chicken->position.y][chicken->position.x-1]= '^';
-		display_background[chicken->position.y][chicken->position.x+1]= '=';
-		send(dispid,1);
-		}
-}
-/*------------------------------------------------------------------------
- *  prntr  --  print a character indefinitely
- *------------------------------------------------------------------------
- */
+	CHICKEN *chicken = chicken_input;	// initiated chicken;
+	int eggs[3];						// TODO: make that array ina the size of (chicken->level)*3
+	int eggs_layed =0;
+	int lay_egg_flag = 1;				// laying egg flag;
+	int stage_level = 2500;				// lay egg every 2.5 sec
+	int init_egg_laying_position_y = chicken->position.y + 1  ;
+	int init_egg_laying_position_x = chicken->position.x  ;
+	int fall_time;
 
+	while (1){
+		if (global_timer%500 == 0){	// game run at 1000hz -> if global_timer%1000 is 0, then a second has passed.
+			display_background[chicken->position.y][chicken->position.x]= ' ';
+			display_background[chicken->position.y][chicken->position.x-1]= ' ';
+			display_background[chicken->position.y][chicken->position.x+1]= ' ';
+			move_chicken(chicken);
+			display_background[chicken->position.y][chicken->position.x]= '^';
+			display_background[chicken->position.y][chicken->position.x-1]= '^';
+			display_background[chicken->position.y][chicken->position.x+1]= '=';
+		}
+		if (global_timer%stage_level == 0 && lay_egg_flag == 1){	// every stage has its allowed num of monsters/eggs
+			// lay egg	
+			//lay_egg(chicken);
+			lay_egg_flag = 0;	// dissable before laying egg.
+			fall_time = global_timer%5;
+			init_egg_laying_position_y = malloc(sizeof(int));
+			init_egg_laying_position_y = chicken->position.y ;
+
+			init_egg_laying_position_x = malloc(sizeof(int));
+			init_egg_laying_position_x = chicken->position.x ;
+
+			display_background[init_egg_laying_position_y+1][init_egg_laying_position_x] = '*';
+			resume( create(lay_egg, INITSTK, INITPRIO, "layed_egg", 2, init_egg_laying_position_y,init_egg_laying_position_x) );
+			resched();
+		}
+		else if (lay_egg_flag == 0){
+			lay_egg_flag = 1 ;
+		}
+
+		send(dispid,1);
+		
+	}
+}
 
  /*------------------------------------------------------------------------
  *  stage_1  --  print stage 1 hard_coded
@@ -367,10 +473,9 @@ void draw_chicken(CHICKEN *chicken_input){
 	chickenPosition->x=7;
 	chickenPosition->y=2;
 	chicken->position=*chackPosition;
+	chicken->level = 1;
 
 	resume( chicken_pid = create(draw_chicken, INITSTK, INITPRIO, "CHICKEN_DRAWER", 1, chicken) );
-
-
  }
 
 void displayer( void )
@@ -403,107 +508,6 @@ void receiver()
   } // while
 } //  receiver
 
-/*
-void updateter()
-{
-
-  int i,j;
-  int gun_position;           
-  int no_of_arrows;
-  int target_disp = 80/TARGET_NUMBER;
-  char ch;
-
-  int no_of_targets;
-
-  no_of_arrows = 0;
-
-  no_of_targets = 4;
-
-  gun_position = 39;
-
-  target_pos[0].x = 3;
-  target_pos[0].y = 0; 
-
-
-  for(i=1; i < TARGET_NUMBER; i++)
-  {
-    target_pos[i].x = i*target_disp;
-    target_pos[i].y = 0; 
-
-  } // for
-  for(i=0; i < ARROW_NUMBER; i++)
-       arrow_pos[i].x =  arrow_pos[i].y = -1;
-
-  while(1)
-  {
-
-   receive();
-
-   while(front != -1)
-   {
-     ch = ch_arr[front];
-     if(front != rear)
-       front++;
-     else
-       front = rear = -1;
-
-     if ( (ch == 'a') || (ch == 'A') )
-       if (gun_position >= 2 )
-              gun_position--;
-       else;
-     else if ( (ch == 'd') || (ch == 'D') )
-       if (gun_position <= 78 )
-         gun_position++;
-       else;
-     else if ( (ch == 'w') || (ch == 'W') )
-       if (no_of_arrows < ARROW_NUMBER)
-       {
-         arrow_pos[no_of_arrows].x = gun_position;
-         arrow_pos[no_of_arrows].y = 23;
-         no_of_arrows++;
-
-       } // if
-   } // while(front != -1)
-
-     ch = 0;
-     for(i=0; i < 25; i++)
-        for(j=0; j < 80; j++)
-            display_draft[i][j] = ' ';  // blank
-
-    display_draft[22][gun_position] = '^';
-    display_draft[23][gun_position-1] = '/';
-    display_draft[23][gun_position] = '|';
-    display_draft[23][gun_position+1] = '\\';
-    display_draft[24][gun_position] = '|';
-
-    for(i=0; i < ARROW_NUMBER; i++)
-       if (arrow_pos[i].x != -1)
-       {
-         if (arrow_pos[i].y > 0)
-           arrow_pos[i].y--;
-           display_draft[arrow_pos[i].y][arrow_pos[i].x] = '^';
-           display_draft[arrow_pos[i].y+1][arrow_pos[i].x] = '|';
-
-       } // if
-
-    for(i=0; i < TARGET_NUMBER; i++)
-       if (target_pos[i].x != -1)
-        {
-         if (target_pos[i].y < 22)
-              target_pos[i].y++;
-         display_draft[target_pos[i].y][target_pos[i].x] = '*';
-        } // if
-
-    for(i=0; i < 25; i++)
-      for(j=0; j < 80; j++)
-        display[i*80+j] = display_draft[i][j];
-    display[2000] = '\0';
-
-  } // while(1)
-
-} // updater 
-*/
-
 int sched_arr_pid[5] = {-1};
 int sched_arr_int[5] = {-1};
 
@@ -534,7 +538,77 @@ SYSCALL schedule(int no_of_pids, int cycle_length, int pid1, ...)
 
 xmain()
 {
-       
+	// Take over x70isr
+	char old_0A1h_mask, old_70h_A_mask;
+	int local_flag = 1, x71h1=0, x71h2=0, x71h3;
+
+	old0x70isr = getvect(0x70);
+	setvect(0x70, new0x70isr);
+
+	asm {
+		CLI         // Disable interrupts
+		PUSH AX     // Interrupt may occur while updating
+
+		IN AL,0A1h  // Make sure IRQ8 is not masked
+		MOV old_0A1h_mask,AL
+		AND AL,0FEh // Set bit 0 of port 0A1 to zero
+		OUT 0A1h,AL //
+
+		IN AL,70h   // Set up "Write into status register A"
+		MOV AL,0Ah  //
+		OUT 70h,AL  //
+		MOV AL,8Ah  //
+		OUT 70h,AL  //
+		IN AL,71h   //
+		MOV BYTE PTR x71h1,AL  // Save old value
+		MOV old_70h_A_mask,AL
+		AND AL,11110000b // Change only Rate
+		OR AL,0110b // Make sure it is Rate =0110 (1Khz)
+		OUT 71h,AL  // Write into status register A
+		IN AL,71h   // Read to confirm write
+
+
+
+		IN AL,70h  // Set up "Write into status register B"
+		MOV AL,0Bh //
+		OUT 70h,AL //
+		MOV AL,8Bh //
+		OUT 70h,AL //
+		IN AL,71h  //
+		MOV BYTE PTR x71h2,AL // Save Old value
+		AND AL,8Fh // Mask out PI,AI,UI
+		OR AL,40h  // Enable periodic interrupts (PI=1) only
+		OUT 71h,AL // Write into status register  B
+		IN AL,71h  // Read to confirm write
+		MOV byte ptr x71h3,AL // Save old value
+
+		IN AL,021h  // Make sure IRQ2 is not masked
+		AND AL,0FBh // Write 0 to bit 2 of port 21h
+		OUT 021h,AL // Write to port 21h
+
+		IN AL,70h  // Set up "Read into status resister C"
+		MOV AL,0Ch // Required for "Write into port 71h"
+		OUT 70h,AL
+		IN AL,70h
+		MOV AL,8Ch // 
+		OUT 70h,AL
+		IN AL,71h  // Read status register C 
+					  // (we do nothing with it)
+
+		IN AL,70h  // Set up "Read into status resister C"
+		MOV AL,0Dh // Required for "Write into port 71h"
+		OUT 70h,AL
+		IN AL,70h
+		MOV AL,8Dh
+		OUT 70h,AL
+		IN AL,71h  // Read status register D 
+					// (we do nothing with it)
+
+
+		STI
+		POP AX
+	  } // asm
+		
 		SetScreen();		//intiate screen mode
 		//print();
         resume( dispid = create(displayer, INITSTK, INITPRIO, "DISPLAYER", 0) );

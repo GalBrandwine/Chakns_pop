@@ -1,8 +1,9 @@
 {
   "ExpandedNodes": [
     "",
-    "\\CHAKNPOP"
+    "\\CHAKNPOP",
+    "\\docs"
   ],
-  "SelectedNode": "\\CHAKNPOP\\chakn_old.c",
+  "SelectedNode": "\\.gitignore",
   "PreviewInSolutionExplorer": false
 }
