@@ -387,7 +387,7 @@ void moveMonster( MONSTER *monster)
 		{
 			
 			monster->position.x = (monster->position.x+1)%80;
-			sleept(1);
+			sleept(50);
 			
 			
 		}
@@ -400,7 +400,7 @@ void moveMonster( MONSTER *monster)
 		if((display_background_color[monster->position.y][(monster->position.x-2)] != WALL_COLOR))
 		{
 			monster->position.x = (monster->position.x-1)%80;
-			sleept(1);
+			sleept(50);
 			
 		}
 		else
@@ -414,7 +414,7 @@ void moveMonster( MONSTER *monster)
 			
 			monster->position.y = (monster->position.y-1)%25;
 
-			sleept(1);
+			sleept(50);
 		}
 		else
 		 {
@@ -427,7 +427,7 @@ void moveMonster( MONSTER *monster)
 			
 			monster->position.y = (monster->position.y+1)%25;
 			
-			sleept(1);
+			sleept(50);
 		}
 		else
 		 {
@@ -439,45 +439,50 @@ void moveMonster( MONSTER *monster)
 
 void drawMonster(MONSTER *monster)
 {
+	
 	while(1)
 	{
 	
-		monster->oldPosition.y=monster->position.y;
-		monster->oldPosition.x=monster->position.x;
-		monster->oldAttribute[0]=display_background_color[monster->position.y][monster->position.x-1];
-		monster->oldAttribute[1]=display_background_color[monster->position.y][monster->position.x];
-		monster->oldAttribute[2]=display_background_color[monster->position.y][monster->position.x+1];
-		monster->oldChar[0]=display_background[monster->position.y][monster->position.x-1];
-		monster->oldChar[1]=display_background[monster->position.y][monster->position.x];
-		monster->oldChar[2]=display_background[monster->position.y][monster->position.x+1];
-		display_background[monster->position.y][monster->position.x-1]= ' ';
-		display_background[monster->position.y][monster->position.x]= ' ';
-		display_background[monster->position.y][monster->position.x+1]= ' ';
-		display_background_color[monster->position.y][monster->position.x-1]= EMPTY_SPACE;
-		display_background_color[monster->position.y][monster->position.x]= EMPTY_SPACE;
-		display_background_color[monster->position.y][monster->position.x+1]= EMPTY_SPACE;
+	monster->oldPosition.y=monster->position.y;
+	monster->oldPosition.x=monster->position.x;
+	monster->oldAttribute[0]=display_background_color[monster->position.y][monster->position.x-1];
+	monster->oldAttribute[1]=display_background_color[monster->position.y][monster->position.x];
+	monster->oldAttribute[2]=display_background_color[monster->position.y][monster->position.x+1];
+	monster->oldChar[0]=display_background[monster->position.y][monster->position.x-1];
+	monster->oldChar[1]=display_background[monster->position.y][monster->position.x];
+	monster->oldChar[2]=display_background[monster->position.y][monster->position.x+1];
+	display_background[monster->position.y][monster->position.x-1]= ' ';
+	display_background[monster->position.y][monster->position.x]= ' ';
+	display_background[monster->position.y][monster->position.x+1]= ' ';
+	display_background_color[monster->position.y][monster->position.x-1]= EMPTY_SPACE;
+	display_background_color[monster->position.y][monster->position.x]= EMPTY_SPACE;
+	display_background_color[monster->position.y][monster->position.x+1]= EMPTY_SPACE;
 	
-		moveMonster(monster);
-		/*
-		display_background[monster->oldPosition.y][monster->oldPosition.x-1] = monster->oldChar[0];
-		display_background[monster->oldPosition.y][monster->oldPosition.x]= monster->oldChar[1];
-		display_background[monster->oldPosition.y][monster->oldPosition.x+1]= monster->oldChar[2];
-		display_background_color[monster->oldPosition.y][monster->oldPosition.x-1]= monster->oldAttribute[0];
-		display_background_color[monster->oldPosition.y][monster->oldPosition.x]= monster->oldAttribute[1];
-		display_background_color[monster->oldPosition.y][monster->oldPosition.x+1]= monster->oldAttribute[2];
-		*/
-	
-		display_background[monster->position.y][monster->position.x-1]= '<';
-		display_background[monster->position.y][monster->position.x]= '=';
-		display_background[monster->position.y][monster->position.x+1]= 'D';
-		display_background_color[monster->position.y][monster->position.x-1]= MONSTER_COLOR;
-		display_background_color[monster->position.y][monster->position.x]= MONSTER_COLOR;
-		display_background_color[monster->position.y][monster->position.x+1]= MONSTER_COLOR;
-		wait(displayer_sem);
-		send(dispid,1);
+	moveMonster(monster);
 
-		sleept(1);
+	/*
+	display_background[monster->oldPosition.y][monster->oldPosition.x-1] = monster->oldChar[0];
+	display_background[monster->oldPosition.y][monster->oldPosition.x]= monster->oldChar[1];
+	display_background[monster->oldPosition.y][monster->oldPosition.x+1]= monster->oldChar[2];
+	display_background_color[monster->oldPosition.y][monster->oldPosition.x-1]= monster->oldAttribute[0];
+	display_background_color[monster->oldPosition.y][monster->oldPosition.x]= monster->oldAttribute[1];
+	display_background_color[monster->oldPosition.y][monster->oldPosition.x+1]= monster->oldAttribute[2];
+	*/
+	
+	display_background[monster->position.y][monster->position.x-1]= '<';
+	display_background[monster->position.y][monster->position.x]= '=';
+	display_background[monster->position.y][monster->position.x+1]= 'D';
+	display_background_color[monster->position.y][monster->position.x-1]= MONSTER_COLOR;
+	display_background_color[monster->position.y][monster->position.x]= MONSTER_COLOR;
+	display_background_color[monster->position.y][monster->position.x+1]= MONSTER_COLOR;
+	
+	send(dispid,1);
+
+	sleept(25);
+	
 	}
+	
+
 }
 
 void lay_egg(int init_egg_laying_position_y, int init_egg_laying_position_x){
@@ -492,8 +497,9 @@ void lay_egg(int init_egg_laying_position_y, int init_egg_laying_position_x){
 	int speed_tod = tod;
 	int temp_x = init_egg_laying_position_x;
 	int temp_y = init_egg_laying_position_y;
-	MONSTER *m;
-	POSITION *monsterPosition;
+	MONSTER m;
+	
+	POSITION monsterPosition;
 
 	while (1){
 		if (abs(tod - speed_tod) >= 1000){
@@ -521,15 +527,19 @@ void lay_egg(int init_egg_laying_position_y, int init_egg_laying_position_x){
 	
 
 	// make egg a monster, and start mooving it my AVIV'S move_monster() func.
+	/*display_background[temp_y][temp_x-1] = '(';
+	display_background[temp_y][temp_x] = '*';
+	display_background[temp_y][temp_x+1] = ')';
+	*/
 	
-	monsterPosition=(POSITION *)malloc(sizeof(POSITION));
-	monsterPosition->x=temp_x;
-	monsterPosition->y=temp_y;
 	
-	m->position=*monsterPosition;
-	m->direction='D';
+	monsterPosition.x= temp_x;
+	monsterPosition.y= temp_y;
+	
+	m.position=monsterPosition;
+	m.direction='D';
 	//resume(create(drawMonster, INITSTK, INITPRIO, "drawMonster",1,m));
-	drawMonster(m);
+	drawMonster(&m);
 }
 
 void move_chicken(CHICKEN *chicken_input){ // move chicken by stage setup.
@@ -590,10 +600,10 @@ void draw_chicken(CHICKEN *chicken_input){
 
 			//lay_egg(chicken);
 			lay_egg_flag = 0;	// dissable before laying egg.
-			init_egg_laying_position_y = malloc(sizeof(int));
+			//init_egg_laying_position_y = malloc(sizeof(int));
 			init_egg_laying_position_y = chicken->position.y ;
 
-			init_egg_laying_position_x = malloc(sizeof(int));
+			//init_egg_laying_position_x = malloc(sizeof(int));
 			init_egg_laying_position_x = chicken->position.x ;
 
 			
