@@ -263,6 +263,11 @@ void drawInPosL(int pos,char letter,char att) //draw on screen
 		POP AX
 	}
 }
+
+/*------------------------------------------------------------------------
+ *  Chuck section
+ *------------------------------------------------------------------------
+ */
 void drawChack()
 {
 	display_background[chack->position.y][chack->position.x]= '^';
@@ -270,7 +275,8 @@ void drawChack()
 	display_background[chack->position.y][chack->position.x+1]= ')';
 	send(dispid,1);
 }
-moveChack(char side)
+
+void moveChack(char side)
 {
 	int jumpCounter=0;
 	display_background[chack->position.y][chack->position.x]= ' ';
@@ -375,6 +381,71 @@ moveChack(char side)
 	drawChack();
 }
 
+/*------------------------------------------------------------------------
+ *  Grenede section
+ *------------------------------------------------------------------------
+ */
+
+void throw_granade(int direction){
+	/* Function for drawing granades.
+		
+	parameter: direction - 1 throw left, 0 throw right.
+	*/
+
+	int flying_time = 10	;	// Fly 3 seconds
+	//int fall_tod = tod;
+	//int flying_speed = 500;
+	int flying_tod = tod;
+	int temp_x = chack->position.x;
+	int temp_y = chack->position.y;
+	
+
+	while (1){
+		if (abs(tod - flying_tod) >= 100){
+			
+			display_background[temp_y][temp_x] = ' ';
+			//temp_y ++;									// update falling position.
+			if( direction == 1){
+				temp_x--;
+				display_background[temp_y][temp_x] = '-';
+				display_background[temp_y][temp_x-1] = '<';
+			}
+			else {
+				temp_x++;
+				display_background[temp_y][temp_x] = '-';
+				display_background[temp_y][temp_x+1] = '>';
+			}
+
+
+			flying_time--;		
+			send(dispid,1);
+			flying_tod = tod;
+		}
+		if (flying_time < 0) {
+			break;
+		}
+	}
+
+	// fall until egg hit breen ground.
+	while(display_background_color[temp_y+1][temp_x] != 40){
+		display_background[temp_y][temp_x-1] = ' ';
+		display_background[temp_y][temp_x+1] = ' ';
+		display_background[temp_y][temp_x] = ' ';
+		temp_y ++;
+	}
+	display_background[temp_y][temp_x] = '^';
+	display_background[temp_y][temp_x+1] = '>';
+	display_background[temp_y][temp_x-1] = '<';
+
+	// TODO: add wait timer befor grenade explodes.
+	// TODO: make throw_granade a process.
+}
+
+
+/*------------------------------------------------------------------------
+ *  Monsters section
+ *------------------------------------------------------------------------
+ */
 void moveMonster( MONSTER *monster)
 {
 	
@@ -745,38 +816,45 @@ void displayer( void )
 
 void receiver()
 {
-  while(1)
-  {
-    char temp;
-    temp = receive();
-    rear++;
-    ch_arr[rear] = temp;
-    if (front == -1)
-       front = 0;
-  } // while
+	while(1)
+	{
+		char temp;
+		temp = receive();
+		rear++;
+		ch_arr[rear] = temp;
+		if (front == -1)
+			front = 0;
+		} // while
 } //  receiver
 
 
 void updateter()
 {
 	int pressed,scan;
- while(1)
- {
-	 pressed = receive();
-	 scan = pressed;
-	  if ((scan == 30)) // 'A' pressed
-       moveChack('L');
-	   else
-     if ((scan == 32)) // 'D' pressed
-       moveChack('R');
-	    else
-     if ((scan == 17)) // 'W' pressed
-       moveChack('U');
-	      else
-     if ((scan == 31)) // 'S' pressed
-       moveChack('D');
-	 
- }
+	while(1)
+	{
+		pressed = receive();
+		scan = pressed;
+		if ((scan == 30)) // 'A' pressed
+			moveChack('L');
+		else if ((scan == 32)) // 'D' pressed
+			moveChack('R');
+		else if ((scan == 17)) // 'W' pressed
+			moveChack('U');
+		else if ((scan == 31)) // 'S' pressed
+		{
+			moveChack('D');
+		}
+
+		else if (scan == 18)	// 'E' pressed
+		{
+			throw_granade(0);	// Throw granade right.
+		}
+		else if (scan == 16)	// 'Q' pressed
+		{
+			throw_granade(1);	// Throw granade left.
+		}
+	}
 } // updater 
 
 
@@ -810,95 +888,22 @@ SYSCALL schedule(int no_of_pids, int cycle_length, int pid1, ...)
 
 xmain()
 {
-	// Take over x70isr
-	  
-	char old_0A1h_mask, old_70h_A_mask;
-	int local_flag = 1, x71h1=0, x71h2=0, x71h3;
-	displayer_sem=screate(1);
-	old0x70isr = getvect(0x70);
-	setvect(0x70, new0x70isr);
-
-	asm {
-		CLI         // Disable interrupts
-		PUSH AX     // Interrupt may occur while updating
-
-		IN AL,0A1h  // Make sure IRQ8 is not masked
-		MOV old_0A1h_mask,AL
-		AND AL,0FEh // Set bit 0 of port 0A1 to zero
-		OUT 0A1h,AL //
-
-		IN AL,70h   // Set up "Write into status register A"
-		MOV AL,0Ah  //
-		OUT 70h,AL  //
-		MOV AL,8Ah  //
-		OUT 70h,AL  //
-		IN AL,71h   //
-		MOV BYTE PTR x71h1,AL  // Save old value
-		MOV old_70h_A_mask,AL
-		AND AL,11110000b // Change only Rate
-		OR AL,0110b // Make sure it is Rate =0110 (1Khz)
-		OUT 71h,AL  // Write into status register A
-		IN AL,71h   // Read to confirm write
-
-
-
-		IN AL,70h  // Set up "Write into status register B"
-		MOV AL,0Bh //
-		OUT 70h,AL //
-		MOV AL,8Bh //
-		OUT 70h,AL //
-		IN AL,71h  //
-		MOV BYTE PTR x71h2,AL // Save Old value
-		AND AL,8Fh // Mask out PI,AI,UI
-		OR AL,40h  // Enable periodic interrupts (PI=1) only
-		OUT 71h,AL // Write into status register  B
-		IN AL,71h  // Read to confirm write
-		MOV byte ptr x71h3,AL // Save old value
-
-		IN AL,021h  // Make sure IRQ2 is not masked
-		AND AL,0FBh // Write 0 to bit 2 of port 21h
-		OUT 021h,AL // Write to port 21h
-
-		IN AL,70h  // Set up "Read into status resister C"
-		MOV AL,0Ch // Required for "Write into port 71h"
-		OUT 70h,AL
-		IN AL,70h
-		MOV AL,8Ch // 
-		OUT 70h,AL
-		IN AL,71h  // Read status register C 
-					  // (we do nothing with it)
-
-		IN AL,70h  // Set up "Read into status resister C"
-		MOV AL,0Dh // Required for "Write into port 71h"
-		OUT 70h,AL
-		IN AL,70h
-		MOV AL,8Dh
-		OUT 70h,AL
-		IN AL,71h  // Read status register D 
-					// (we do nothing with it)
-
-
-		STI
-		POP AX
-	  } // asm
+	setLatch(1193);		// for working in 1000hz +-
+	SetScreen();		//intiate screen mode
+	
+    resume( dispid = create(displayer, INITSTK, INITPRIO, "DISPLAYER", 0) );
+    resume( recvpid = create(receiver, INITSTK, INITPRIO+3, "RECIVEVER", 0) );
+	resume( uppid = create(updateter, INITSTK, INITPRIO, "UPDATER", 0) );
+	resume( stage_1_pid = create(stage_1, INITSTK, INITPRIO, "STAGE1", 0) );
+    receiver_pid =recvpid;  
+    set_new_int9_newisr();
 		
-
-		setLatch(1193);
-		SetScreen();		//intiate screen mode
-		//print();
-        resume( dispid = create(displayer, INITSTK, INITPRIO, "DISPLAYER", 0) );
-        resume( recvpid = create(receiver, INITSTK, INITPRIO+3, "RECIVEVER", 0) );
-		resume( uppid = create(updateter, INITSTK, INITPRIO, "UPDATER", 0) );
-		resume( stage_1_pid = create(stage_1, INITSTK, INITPRIO, "STAGE1", 0) );
-        receiver_pid =recvpid;  
-        set_new_int9_newisr();
-		
-		chackPosition=(POSITION *)malloc(sizeof(POSITION));
-		chackPosition->x=7;
-		chackPosition->y=2;
-		chack->position=*chackPosition;
-		chack->life = NUMOFLIFES;
-		chack->gravity=1;
+	chackPosition=(POSITION *)malloc(sizeof(POSITION));
+	chackPosition->x=7;
+	chackPosition->y=2;
+	chack->position=*chackPosition;
+	chack->life = NUMOFLIFES;
+	chack->gravity=1;
 		
     schedule(2,57, dispid, 0,  uppid, 29,stage_1_pid,30);
 } // xmain
