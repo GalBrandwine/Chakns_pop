@@ -116,19 +116,36 @@ Current stage parameters:
 	3 - stage
 */
 int current_stage = 0; 
+int displayer_sem = 1; 
+int receiver_pid;
+int (*old9newisr)(int);
+int uppid, dispid, recvpid, stage_manager_pid, stage_0_pid, stage_1_pid, stage_2_pid, stage_3_pid, platform_3_pid, platform_3_pid1;
+volatile int global_flag;
+volatile int global_timer =0 ;
 
- volatile int global_flag;
- volatile int global_timer =0 ;
- void interrupt (*old0x70isr)(void);
-
- void platform(int min,int max,int hight,int movment, int left);					//general platform function
-
+void interrupt (*old0x70isr)(void);
+void platform(int min,int max,int hight,int movment, int left);					//general platform function
 
 void stage_3_platform();		// platform 3 proc
 void stage_3_platform2();		// platform 3 proc 2
 
+char display[2001];			//char
+char display_color[2001];	//Color
+char display_background [25][80]; //level design
+char display_background_color [25][80]; //level design color, for sampeling where the items are in the screen
+char ch_arr[2048];
+int front = -1;
+int rear = -1;
+
+int point_in_cycle;
+int gcycle_length;
+int gno_of_pids;
 
 
+/*------------------------------------------------------------------------
+ *  Latch  --  for changing game speed.
+ *------------------------------------------------------------------------
+ */
 void setLatch(int latch)
 {
 	asm{
@@ -179,56 +196,45 @@ void interrupt new0x70isr(void)
 } // new0x70isr
 
 
-int displayer_sem = 1; 
-int receiver_pid;
-int (*old9newisr)(int);
- int uppid, dispid, recvpid, stage_0_pid, stage_2_pid, stage_3_pid, platform_3_pid, platform_3_pid1;
+
 
 
 INTPROC new_int9(int mdevno)
 {
-char result;
- int scan = 0;
- static int ctrl_pressed  = 0;
+	char result;
+	int scan = 0;
+	static int ctrl_pressed  = 0;
 
-asm {
-   PUSH AX
-   IN AL,60h
-   MOV BYTE PTR scan,AL
-   POP AX
- } //asm
+	asm {
+	   PUSH AX
+	   IN AL,60h
+	   MOV BYTE PTR scan,AL
+	   POP AX
+	} //asm
 
- if (scan == 29)
-    ctrl_pressed  = 1;
- else
-   if (scan == 157)
-     ctrl_pressed  = 0;
-   else  
-     if ((scan == 46) && (ctrl_pressed == 1)) // Control-C?
-     {
-		 // Part1: Initialize the display adapter
-		 setvect(0x70,old0x70isr);	// restore old x70 ISR.
+	if (scan == 29)
+		ctrl_pressed  = 1;
+	else if (scan == 157)
+		ctrl_pressed  = 0;
+	else if ((scan == 46) && (ctrl_pressed == 1)) // Control-C?
+    {
+		// Part1: Initialize the display adapter
+		setvect(0x70,old0x70isr);	// restore old x70 ISR.
 		asm{
 			MOV              AH, 0// Select function = 'Set mode'
 			MOV              AL, 2// restore the display mode
 			INT              10h// Adapter initialized.Page 0 displayed
 			INT 27
 		}
-     } // if
-     else
-     if ((scan == 2) && (ctrl_pressed == 1)) // Control-C?
-        send(butlerpid, MSGPSNAP);
-     else
-     if ((scan == 3) && (ctrl_pressed == 1)) // Control-C?
-        send(butlerpid, MSGTSNAP);
-     else
-     if ((scan == 4) && (ctrl_pressed == 1)) // Control-C?
+    } // if
+    else if ((scan == 2) && (ctrl_pressed == 1)) // Control-C?
+		send(butlerpid, MSGPSNAP);
+    else if ((scan == 3) && (ctrl_pressed == 1)) // Control-C?
+		send(butlerpid, MSGTSNAP);
+    else if ((scan == 4) && (ctrl_pressed == 1)) // Control-C?
         send(butlerpid, MSGDSNAP);
-	///
+
 	send(uppid,scan);
-	////
-  
- // old9newisr(mdevno);
 return 0;
 }
 
@@ -246,6 +252,10 @@ void set_new_int9_newisr()
 } // set_new_int9_newisr
 
 
+/*------------------------------------------------------------------------
+ * Position sturct
+ *------------------------------------------------------------------------
+ */
 typedef struct position
 {
   int x;
@@ -273,6 +283,24 @@ char randDirection(){
 	}
  }
 
+
+
+
+/*------------------------------------------------------------------------
+ * Print to screen:
+ *	taken from: https://wiki.osdev.org/Printing_To_Screen
+ *	modified by gal.
+ *------------------------------------------------------------------------
+ */
+void write_string( int string_start_pos_y, int string_start_pos_x, int colour, char *string )
+{
+    int str_len = 0;
+
+	while( *string != '\0' ){
+	   display_background[string_start_pos_y][string_start_pos_x] = *string++;
+	   display_background_color[string_start_pos_y][string_start_pos_x++] = colour;
+	}
+}
 
 /*------------------------------------------------------------------------
 /* Game characters 
@@ -306,18 +334,7 @@ typedef struct monster
 
 
 
-char display[2001];			//char
-char display_color[2001];	//Color
-char display_background [25][80]; //level design
-char display_background_color [25][80]; //level design color, for sampeling where the items are in the screen
 
-char ch_arr[2048];
-int front = -1;
-int rear = -1;
-
-int point_in_cycle;
-int gcycle_length;
-int gno_of_pids;
 
 
 
@@ -1305,11 +1322,7 @@ void draw_chicken(CHICKEN *chicken_input){
 				go_back = 0;
 				min++;
 				max++;
-			}
-
-
-			
-			
+			}	
 			plat_tod = tod;
 			send(dispid,1);	
 		}
@@ -1398,164 +1411,57 @@ void stage_3(){
  }
 
 
- /*------------------------------------------------------------------------
- *  stage_0 MENU  --  print stage 1 hard_coded
- *------------------------------------------------------------------------
- */
+/*------------------------------------------------------------------------
+*  stage_0 MENU  --  print stage 0 hard_coded
+*------------------------------------------------------------------------
+*/
  void print_stage_0(){
 	int i,j,temp_j,pos;
 	int hole_flag =	0;
-	//int edge_needed_left =1;
-	//int edge_needed_right =0;
-	//int hole_size = 5;
-	//int number_of_hearts = 3;
 	
-		for(i = 0; i < 25; i++ )
-		{
-			for(j = 0; j < 80; j++)
-			{
-				pos = 2*(i*80 + j);
-				// print stage rounding square
-				display_background_color[i][j] = EMPTY_SPACE;
-
-				if( i ==0 || j == 0 || i ==24 || j==79){
-					display_background_color[i][j] = WALL_COLOR;
-				}
-				/*
-				else if (i%4 == 0){		// print floors
-					
-					if (j < hole_size && edge_needed_left == 1 && edge_needed_right == 0){ // set flags for printing only left_hole
-						display_background_color[i][j] = EMPTY_SPACE;
-						
-					}
-					else if (j + hole_size > 80 && edge_needed_left == 0 && edge_needed_right == 1){ // set plags for printing right_hole
-						display_background_color[i][j] = EMPTY_SPACE;
-						
-					}
-					else{
-						display_background_color[i][j] = WALL_COLOR;
-					}
-				}
-				else{
-					display_background_color[i][j] = EMPTY_SPACE;
-				}
-				if (j == 79 && i%4 == 0){ // make stage 1 patterns (shti va erev)
-					edge_needed_left = 1 - edge_needed_left;
-					edge_needed_right = 1- edge_needed_right;
-				}
-*/
-			}
-			/*
-			// Print stage hearts.
-			// by the function: pos = 2*(i*80 + j);
-			// heart 1
-			display_background[7][9] = '<';
-			display_background_color[7][9] = WALL_COLOR;
-			display_background[7][10] = 'B';
-			display_background_color[7][10] = WALL_COLOR;
-			// heart 2
-			display_background[15][55] = '<';
-			display_background_color[15][55] = HEARTCOLLOR;
-			
-			display_background[15][56] = 'B';
-			display_background_color[15][56] = HEARTCOLLOR;
-			
-			// heart 3
-			display_background[19][9] = '<';
-			display_background_color[19][9] = HEARTCOLLOR;
-			
-			display_background[19][10] = 'B';
-			display_background_color[19][10] = HEARTCOLLOR;
-	
-			
-			drawChack();
-			*/
-		}
-		send(dispid,1);
- }
-
-
-  void stage_0(){
-	// create a chicken.
-	//CHICKEN *chicken;
-	//POSITION *chickenPosition;
-	//int chicken_pid;
-	//MONSTER *m;
-	//POSITION *monsterPosition;
-	
-	print_stage_0();	// print stage on the screen
-	/* 
-	 // initiate chicken.
-	chickenPosition=(POSITION *)malloc(sizeof(POSITION));
-	chickenPosition->x=7;
-	chickenPosition->y=2;
-	chicken->position=*chickenPosition;
-	chicken->level = 1;
-	resume( chicken_pid = create(draw_chicken, INITSTK, INITPRIO, "CHICKEN_DRAWER", 1, chicken) );
-	*/
-	  
- }
-
- void stage_manager(){
- 	 int stage_number;
-	 stage_number = receive();
-	 switch (stage_number)
+	for(i = 0; i < 25; i++ )
 	{
-	/*
-		case 'R'://move  right
-		if((display_background_color[monster->position.y][(monster->position.x+2)] != WALL_COLOR))
+		for(j = 0; j < 80; j++)
 		{
-			
-			monster->position.x = (monster->position.x+1)%80;
-			sleept(50);
-			
-			
+			pos = 2*(i*80 + j);
+			// print stage rounding square
+			display_background_color[i][j] = EMPTY_SPACE;
+
+			if( i ==0 || j == 0 || i ==24 || j==79){
+				display_background_color[i][j] = WALL_COLOR;
+			}
 		}
-		 else
-		 {
-			 monster->direction =randDirection();
-		 }
-		break;
-		case 'L'://move left
-		if((display_background_color[monster->position.y][(monster->position.x-2)] != WALL_COLOR))
-		{
-			monster->position.x = (monster->position.x-1)%80;
-			sleept(50);
-			
-		}
-		else
-		 {
-			 monster->direction =randDirection();
-		 }
-		break;
-		case 'U'://move up
-		if((display_background_color[monster->position.y-1][(monster->position.x)] != WALL_COLOR))
-		{
-			
-			monster->position.y = (monster->position.y-1)%25;
-			sleept(50);
-		}
-		else
-		 {
-			 monster->direction =randDirection();
-		 }
-		break;
-		case 'D'://move down
-			if((display_background_color[monster->position.y+1][(monster->position.x)] != WALL_COLOR))
-		{
-			
-			monster->position.y = (monster->position.y+1)%25;
-			
-			sleept(50);
-		}
-		else
-		 {
-			 monster->direction =randDirection();
-		 }
-		 */
-		break;
 	}
+	write_string(10, 30, 185,"Chack   POP!");
+	write_string(13, 30, 20,"Press enter to begin...");
+	send(dispid,1);
  }
+
+
+void stage_0(){
+	print_stage_0();	// print stage on the screen
+}
+
+void stage_manager(){
+ 	int stage_number;
+	while(1){
+		stage_number = receive();
+		switch (stage_number){
+		case 0://	activate stage 0, menu
+			resume( stage_0_pid);
+			break;
+		case 1://	activate stage 1
+			resume( stage_1_pid);
+			break;	
+		case 2://	activate stage 2
+			resume( stage_2_pid);
+			break;
+		case 3://	activate stage 3
+			resume( stage_3_pid);
+			break;
+		}
+	}
+}
 
  
 void displayer( void )
@@ -1614,6 +1520,10 @@ void updateter()
 		else if (scan == 16)	// 'Q' pressed
 		{
 			resume( create(throw_granade, INITSTK, INITPRIO, "Granade", 1,1) ); // Throw granade left.
+		}
+		else if (scan ==0x1C && current_stage == 0){
+			current_stage = 1;
+			send(stage_manager_pid, current_stage);
 		}
 	}
 } // updater 
@@ -1709,12 +1619,18 @@ xmain()
     resume( recvpid = create(receiver, INITSTK, INITPRIO+3, "RECIVEVER", 0) );
 	resume( uppid = create(updateter, INITSTK, INITPRIO, "UPDATER", 0) );
 	
-	resume( stage_3_pid = create(stage_3, INITSTK, INITPRIO, "STAGE3", 0) );
-	//resume( stage_0_pid = create(stage_0, INITSTK, INITPRIO, "MENU", 0) );
+	resume( stage_manager_pid = create(stage_manager, INITSTK, INITPRIO, "stage_manager", 0) );
+	stage_0_pid = create(stage_0, INITSTK, INITPRIO, "MENU", 0);
+	stage_1_pid = create(stage_1, INITSTK, INITPRIO, "STAGE1", 0);
+	stage_2_pid = create(stage_2, INITSTK, INITPRIO, "STAGE2", 0);
+	stage_3_pid = create(stage_3, INITSTK, INITPRIO, "STAGE3", 0);
     //resume(sound_id = create(sound, INITSTK, INITPRIO, "sound", 0));
+	
 	receiver_pid =recvpid;  
     set_new_int9_newisr();
-		
+	
+	send(stage_manager_pid,0);		// activate stage_manager;
+
 	chackPosition=(POSITION *)malloc(sizeof(POSITION));
 	chackPosition->x=7;
 	chackPosition->y=2;
@@ -1724,5 +1640,5 @@ xmain()
 	chack->life = NUMOFLIFES;
 	chack->gravity=1;
 		
-    schedule(2,57, dispid, 0,  uppid, 29, stage_3_pid,30);
-} // xmain
+    schedule(7,57, dispid, 0,  uppid, 29, stage_manager_pid, 30, stage_0_pid, 32, stage_1_pid, 34, stage_2_pid, 36,stage_3_pid, 38);
+} // xmain	
