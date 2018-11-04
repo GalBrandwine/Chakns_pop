@@ -5,30 +5,72 @@
 #include <io.h>
 #include <bios.h>
 #include <stdio.h>
-#include <sleep.h>
+#include <math.h>
 #include <butler.h>
-
+#include <sleep.h>
 
 extern SYSCALL  sleept(int);
 extern SYSCALL	resched();
 extern struct intmap far *sys_imp;
+
+
+/*------------------------------------------------------------------------
+ *  Game parameters.
+ *------------------------------------------------------------------------
+ */
 #define WALL_COLOR 40
 #define EMPTY_SPACE 120
+#define FINNISH_GATE 155
 #define NUMOFLIFES 3
 #define HEARTCOLLOR 65
+#define MONSTER_COLOR 0x30
 #define MAX_MONSTERS 10
+#define MAX_ENEMIES 15
+
+#define GRANADE_SMOKE_COLOR 70
+
+/*
+Current stage parameters:
+	0 - menu, 
+	1 - stage
+	2 - stage
+	3 - stage
+*/
+int current_stage = 0; 
+
+ volatile int global_flag;
+ volatile int global_timer =0 ;
+ void interrupt (*old0x70isr)(void);
+
+ void platform(int min,int max,int hight,int movment, int left);					//general platform function
 
 
+void stage_3_platform();		// platform 3 proc
+void stage_3_platform2();		// platform 3 proc 2
+
+
+
+void setLatch(int latch)
+{
+	asm{
+		  CLI			// critial scanCode:
+		  PUSH AX		// here were programin the timer (ch0)
+		  MOV AL,036h	// to work in (1,193,180/1193) = 1096 hz	
+		  OUT 43h,AL	//
+		  MOV AX,latch	//
+		  OUT 40h,AL	//
+		  MOV AL,AH		//
+		  OUT 40h,AL 	//
+		  POP AX		//
+		  STI
+	}
+}
 
 
 /*------------------------------------------------------------------------
  *  new0x70isr  --  for controlling tiiming of the game.
  *------------------------------------------------------------------------
  */
- volatile int global_flag;
- volatile int global_timer =0 ;
-void interrupt (*old0x70isr)(void);
-
 void interrupt new0x70isr(void)
 {
   global_flag = 1;
@@ -55,19 +97,15 @@ void interrupt new0x70isr(void)
    POP AX
 
   } // asm */
-
-
 } // new0x70isr
 
 
-
-/*------------------------------------------------------------------------
- *  xmain  --  example of 2 processes executing the same code concurrently
- *------------------------------------------------------------------------
- */
+int displayer_sem = 1; 
 int receiver_pid;
 int (*old9newisr)(int);
- int uppid, dispid, recvpid, stage_1_pid;
+ int uppid, dispid, recvpid, stage_0_pid, stage_2_pid, stage_3_pid, platform_3_pid, platform_3_pid1;
+
+
 INTPROC new_int9(int mdevno)
 {
 char result;
@@ -90,6 +128,7 @@ asm {
      if ((scan == 46) && (ctrl_pressed == 1)) // Control-C?
      {
 		 // Part1: Initialize the display adapter
+		 setvect(0x70,old0x70isr);	// restore old x70 ISR.
 		asm{
 			MOV              AH, 0// Select function = 'Set mode'
 			MOV              AL, 2// restore the display mode
@@ -106,21 +145,11 @@ asm {
      else
      if ((scan == 4) && (ctrl_pressed == 1)) // Control-C?
         send(butlerpid, MSGDSNAP);
-	else
-     if ((scan == 30)) // 'A' pressed
-       moveChack('L');
-	   else
-     if ((scan == 32)) // 'D' pressed
-       moveChack('R');
-	    else
-     if ((scan == 17)) // 'W' pressed
-       moveChack('U');
-	      else
-     if ((scan == 31)) // 'S' pressed
-       moveChack('D');
-	   
+	///
+	send(uppid,scan);
+	////
+  
  // old9newisr(mdevno);
-
 return 0;
 }
 
@@ -146,16 +175,36 @@ typedef struct position
 }  POSITION;
 
 
+char randDirection(){
+	int newDirection=rand()%4;
+	switch(newDirection)
+	{
+		case 0:
+		return  'U';
+		break;
+		case 1:
+		return 'D';
+		break;
+		case 2:
+		return 'L';
+		break;
+		case 3:
+		return 'R';
+		break;
+	}
+ }
+
+
 /*------------------------------------------------------------------------
 /* Game characters 
  *------------------------------------------------------------------------
  */
 typedef struct chack
 {
-	char *name;	// user can set Chack's name in MENU scren.
+	char *name;		// user can set Chack's name in MENU scren.
 	int score;
-	int life;	// Life must be above 0, initiates with  NUMOFLIFES
-	int gravity; // 0 means standing on floor, 1 means standing on floor
+	int life;		// Life must be above 0, initiates with  NUMOFLIFES
+	int gravity;	// 0 means standing on floor, 1 means standing on floor
 	POSITION position;
 } CHACK;
 
@@ -167,14 +216,17 @@ typedef struct chicken
 
 typedef struct monster
 {
-	int alive;	// alive is a boolean flag, it is set to true when moster is born out of egg, and set to FALSE when monster entered to granade smoke.
-	int gravity; // 0 means standing on floor, 1 means standing on floor
+	int alive;			// alive is a boolean flag, it is set to true when moster is born out of egg, and set to FALSE when monster entered to granade smoke.
+	char direction;		//the direction of the monster(U,D,R,L)
 	POSITION position;
+	POSITION oldPosition;
+	char oldAttribute[3];
+	char oldChar[3];
+	
 }MONSTER;
 
 
 
-MONSTER monsters[MAX_MONSTERS];
 char display[2001];			//char
 char display_color[2001];	//Color
 char display_background [25][80]; //level design
@@ -188,13 +240,17 @@ int point_in_cycle;
 int gcycle_length;
 int gno_of_pids;
 
-/*------------------------------------------------------------------------
- *  New Stuff	New Stuff	New Stuff	New Stuff	New Stuff
- *------------------------------------------------------------------------
- */
+
+
 POSITION *chackPosition;
 CHACK *chack;
+MONSTER monsters[MAX_MONSTERS];	// Array of monsters, for controlling theirs PID's
 
+
+/*------------------------------------------------------------------------
+ * Set screen to text mode.
+ *------------------------------------------------------------------------
+ */
 void SetScreen ()
 {
 	asm{
@@ -205,6 +261,7 @@ void SetScreen ()
 		POP AX
 	}
 } // SetScreen
+
 
 void drawInPosL(int pos,char letter,char att) //draw on screen
 {
@@ -224,6 +281,12 @@ void drawInPosL(int pos,char letter,char att) //draw on screen
 		POP AX
 	}
 }
+
+
+/*------------------------------------------------------------------------
+ *  Chuck section
+ *------------------------------------------------------------------------
+ */
 void drawChack()
 {
 	display_background[chack->position.y][chack->position.x]= '^';
@@ -231,9 +294,10 @@ void drawChack()
 	display_background[chack->position.y][chack->position.x+1]= ')';
 	send(dispid,1);
 }
-moveChack(char side)
+
+void moveChack(char side)
 {
-	
+	int jumpCounter=0;
 	display_background[chack->position.y][chack->position.x]= ' ';
 	display_background[chack->position.y][chack->position.x-1]= ' ';
 	display_background[chack->position.y][chack->position.x+1]= ' ';
@@ -241,32 +305,69 @@ moveChack(char side)
 	switch (side)
 	{
 		case 'R'://move  right
-		if(display_background_color[chack->position.y][(chack->position.x+1)] != 40)//if its not green wall
+		if(display_background_color[chack->position.y][(chack->position.x+1)] != WALL_COLOR)//if its not green wall
 		{
 			chack->position.x = (chack->position.x+1)%80;
 		}
-		
+		else if(display_background_color[chack->position.y-1][(chack->position.x+1)] != WALL_COLOR && (display_background_color[chack->position.y-1][(chack->position.x)] != WALL_COLOR))//if he can climb the wall
+		{
+			display_background[chack->position.y][chack->position.x]= ' ';
+			display_background[chack->position.y][chack->position.x-1]= ' ';
+			display_background[chack->position.y][chack->position.x+1]= ' ';
+			chack->position.y = (chack->position.y-1)%80;
+			drawChack();
+			sleept(1);
+			display_background[chack->position.y][chack->position.x]= ' ';
+			display_background[chack->position.y][chack->position.x-1]= ' ';
+			display_background[chack->position.y][chack->position.x+1]= ' ';
+			chack->position.x = (chack->position.x+1)%80;
+			drawChack();
+		}
+		else if (display_background_color[chack->position.y][(chack->position.x+1)] != FINNISH_GATE)// if hit exit door
+		{
+			// TODO: change stage, from current to the next stage, or menu if finnished.
+		}
+
 		break;
 		case 'L'://move left
-		if(display_background_color[chack->position.y][(chack->position.x-1)] != 40)//if its not green wall
+		if(display_background_color[chack->position.y][(chack->position.x-1)] != WALL_COLOR)//if its not green wall
 		{
 			chack->position.x = (chack->position.x-1)%80;
 		}
+		else
+			if(display_background_color[chack->position.y-1][(chack->position.x-1)] != WALL_COLOR && (display_background_color[chack->position.y-1][(chack->position.x)] != WALL_COLOR))//if he can climb the wall
+		{
+			display_background[chack->position.y][chack->position.x]= ' ';
+			display_background[chack->position.y][chack->position.x-1]= ' ';
+			display_background[chack->position.y][chack->position.x+1]= ' ';
+			chack->position.y = (chack->position.y-1)%80;
+			drawChack();
+			sleept(1);
+			display_background[chack->position.y][chack->position.x]= ' ';
+			display_background[chack->position.y][chack->position.x-1]= ' ';
+			display_background[chack->position.y][chack->position.x+1]= ' ';
+			chack->position.x = (chack->position.x-1)%80;
+			drawChack();
+		}
 		break;
 		case 'U'://move up
-		if(display_background_color[chack->position.y-1][(chack->position.x)] != 77)//if its not red wall
+		jumpCounter =0;
+		while((display_background_color[chack->position.y-1][(chack->position.x)] != WALL_COLOR) && (jumpCounter<3))
 		{
+			display_background[chack->position.y][chack->position.x]= ' ';
+			display_background[chack->position.y][chack->position.x-1]= ' ';
+			display_background[chack->position.y][chack->position.x+1]= ' ';
 			chack->position.y = (chack->position.y-1)%25;
+			jumpCounter++;
+			drawChack();
+			sleept(1);
+		}
+		if(display_background_color[chack->position.y-1][(chack->position.x)] == WALL_COLOR){
+			chack->gravity=0;
 		}
 		break;
 		case 'D'://move down
-		if(display_background_color[chack->position.y+1][(chack->position.x)] != 77)//if its not red wall
-		{
-			chack->position.y = (chack->position.y+1)%25;
-		}
-		break;
-	}
-	while((display_background_color[chack->position.y+1][(chack->position.x)]!= 77) && (display_background_color[chack->position.y+1][(chack->position.x)] != 40))
+		while((display_background_color[chack->position.y+1][(chack->position.x)]!= WALL_COLOR))//chack is falling
 	{
 		display_background[chack->position.y][chack->position.x]= ' ';
 		display_background[chack->position.y][chack->position.x-1]= ' ';
@@ -274,30 +375,294 @@ moveChack(char side)
 		chack->position.y = (chack->position.y+1);
 		
 		drawChack();
+		sleept(1);
+	}
+	break;
+}
+	if((display_background_color[chack->position.y+1][(chack->position.x)] != WALL_COLOR))
+	{
+		if( (display_background_color[chack->position.y-1][(chack->position.x)] == WALL_COLOR))
+		{
+		chack->gravity=0;
+		}
+		else
+		{
+		chack->gravity=1;
+		}	
+	
+	}
+	while((chack->gravity==1) && (display_background_color[chack->position.y+1][(chack->position.x)]!= WALL_COLOR))//chack is falling
+	{
+		display_background[chack->position.y][chack->position.x]= ' ';
+		display_background[chack->position.y][chack->position.x-1]= ' ';
+		display_background[chack->position.y][chack->position.x+1]= ' ';
+		chack->position.y = (chack->position.y+1);
+		drawChack();
+		sleept(1);
 	}
 	drawChack();
 }
+
+
+/*------------------------------------------------------------------------
+ *  Grenede section
+ *------------------------------------------------------------------------
+ */
+ void free_heart(int y, int temp_y, int x, int temp_x){
+	/*Funstion for animating frying hert.
+
+	if a heart id has been freed, than it should go up to the ceiling and make a new gate.
+	*/
+	int hole_width = 5;
+	int temp;
+
+	for ( ; temp_y >= 0; temp_y--){
+			if (display_background_color[temp_y][temp_x] != WALL_COLOR){
+				display_background_color[temp_y - y][temp_x + x]= EMPTY_SPACE - 30;
+			}
+	}
+	for (temp =0 ; temp <= hole_width; temp++){
+		display_background_color[0][temp_x + temp]= FINNISH_GATE;	
+	}
+ }
+
+
+void throw_granade(int direction){
+	/* Function for drawing throwen granades.
+		
+	parameter: direction - 1 throw left, 0 throw right.
+	*/
+
+	// Fly 1 seconds, remember that latch suppose to be set to work at 1000hz, 
+	// so flying time will be reduced once every 100 ms, hance a second
+	int flying_time = 10;	
+	int flying_tod = tod;
+	int granade_explode_timer = tod; // sleep 3 sec before exploding;
+	int temp_x = chack->position.x;
+	int temp_y = chack->position.y;
+
+	int y;
+	int x;
+	
+
+	while (1){
+		if (abs(tod - flying_tod) >= 100){	// print to tscreen granade every 0.1 sec
+			
+			display_background[temp_y][temp_x] = ' ';
+			if( direction == 1){// move granade left
+				temp_x--;
+				display_background[temp_y][temp_x] = '-';
+				display_background[temp_y][temp_x-1] = '<';
+			}
+			else {// move granade right.
+				temp_x++;
+				display_background[temp_y][temp_x] = '-';
+				display_background[temp_y][temp_x+1] = '>';
+			}
+
+
+			flying_time--;		
+			send(dispid,1);
+			flying_tod = tod;
+		}
+		if (flying_time < 0) {
+			break;
+		}
+	}
+
+	// Fall until granade hit breen ground.
+	while(display_background_color[temp_y+1][temp_x] != 40){
+		display_background[temp_y][temp_x-1] = ' ';
+		display_background[temp_y][temp_x+1] = ' ';
+		display_background[temp_y][temp_x] = ' ';
+		temp_y ++;
+	}
+	display_background[temp_y][temp_x] = '^';
+	display_background[temp_y][temp_x+1] = '>';
+	display_background[temp_y][temp_x-1] = '<';
+
+
+	// Ugly buisy/wait loop.
+	while (abs(tod - granade_explode_timer) <= 3000){
+	}
+
+	for (y = 0; y <= 1; y++){
+		for(x = -1; x <= 1; x++){
+			if (display_background_color[temp_y - y][temp_x + x] == HEARTCOLLOR){
+				free_heart(y, temp_y, x, temp_x);
+			}
+			display_background_color[temp_y - y][temp_x + x]= GRANADE_SMOKE_COLOR;
+
+		}
+	}
+	if (display_background_color[temp_y][temp_x - 2] == HEARTCOLLOR || display_background_color[temp_y][temp_x + 2] == HEARTCOLLOR){
+				free_heart(y, temp_y, x, temp_x);
+	}
+	display_background_color[temp_y][temp_x - 2]= GRANADE_SMOKE_COLOR;
+	display_background_color[temp_y][temp_x + 2]= GRANADE_SMOKE_COLOR;
+	display_background[temp_y][temp_x]= ' ';
+	display_background[temp_y][temp_x+1] = ' ';
+	display_background[temp_y][temp_x-1] = ' ';
+
+	// Reset granade_explode_timer timer;
+	granade_explode_timer = tod;
+	while (abs(tod - granade_explode_timer) <= 3000){
+	}
+
+	// Clear granade's smoke.
+	for (y = 0; y <= 1; y++){
+		for(x = -1; x <= 1; x++){
+			display_background_color[temp_y - y][temp_x + x]= EMPTY_SPACE;
+		}
+	}
+	display_background_color[temp_y][temp_x - 2]= EMPTY_SPACE;
+	display_background_color[temp_y][temp_x + 2]= EMPTY_SPACE;
+}
+
+
+/*------------------------------------------------------------------------
+ *  Monsters section
+ *------------------------------------------------------------------------
+ */
+void moveMonster( MONSTER *monster)
+{
+	
+	int newDirection;
+	sleept(1);
+	switch (monster->direction)
+	{
+		case 'R'://move  right
+		if((display_background_color[monster->position.y][(monster->position.x+2)] != WALL_COLOR))
+		{
+			
+			monster->position.x = (monster->position.x+1)%80;
+			sleept(50);
+			
+			
+		}
+		 else
+		 {
+			 monster->direction =randDirection();
+		 }
+		break;
+		case 'L'://move left
+		if((display_background_color[monster->position.y][(monster->position.x-2)] != WALL_COLOR))
+		{
+			monster->position.x = (monster->position.x-1)%80;
+			sleept(50);
+			
+		}
+		else
+		 {
+			 monster->direction =randDirection();
+		 }
+		break;
+		case 'U'://move up
+		if((display_background_color[monster->position.y-1][(monster->position.x)] != WALL_COLOR))
+		{
+			
+			monster->position.y = (monster->position.y-1)%25;
+
+			sleept(50);
+		}
+		else
+		 {
+			 monster->direction =randDirection();
+		 }
+		break;
+		case 'D'://move down
+			if((display_background_color[monster->position.y+1][(monster->position.x)] != WALL_COLOR))
+		{
+			
+			monster->position.y = (monster->position.y+1)%25;
+			
+			sleept(50);
+		}
+		else
+		 {
+			 monster->direction =randDirection();
+		 }
+		break;
+	}
+}
+
+void drawMonster(MONSTER *monster)
+{
+	
+	while(1)
+	{
+	
+	monster->oldPosition.y=monster->position.y;
+	monster->oldPosition.x=monster->position.x;
+	monster->oldAttribute[0]=display_background_color[monster->position.y][monster->position.x-1];
+	monster->oldAttribute[1]=display_background_color[monster->position.y][monster->position.x];
+	monster->oldAttribute[2]=display_background_color[monster->position.y][monster->position.x+1];
+	monster->oldChar[0]=display_background[monster->position.y][monster->position.x-1];
+	monster->oldChar[1]=display_background[monster->position.y][monster->position.x];
+	monster->oldChar[2]=display_background[monster->position.y][monster->position.x+1];
+	display_background[monster->position.y][monster->position.x-1]= ' ';
+	display_background[monster->position.y][monster->position.x]= ' ';
+	display_background[monster->position.y][monster->position.x+1]= ' ';
+	display_background_color[monster->position.y][monster->position.x-1]= EMPTY_SPACE;
+	display_background_color[monster->position.y][monster->position.x]= EMPTY_SPACE;
+	display_background_color[monster->position.y][monster->position.x+1]= EMPTY_SPACE;
+	
+	moveMonster(monster);
+
+	/*
+	display_background[monster->oldPosition.y][monster->oldPosition.x-1] = monster->oldChar[0];
+	display_background[monster->oldPosition.y][monster->oldPosition.x]= monster->oldChar[1];
+	display_background[monster->oldPosition.y][monster->oldPosition.x+1]= monster->oldChar[2];
+	display_background_color[monster->oldPosition.y][monster->oldPosition.x-1]= monster->oldAttribute[0];
+	display_background_color[monster->oldPosition.y][monster->oldPosition.x]= monster->oldAttribute[1];
+	display_background_color[monster->oldPosition.y][monster->oldPosition.x+1]= monster->oldAttribute[2];
+	*/
+	
+	display_background[monster->position.y][monster->position.x-1]= '<';
+	display_background[monster->position.y][monster->position.x]= '=';
+	display_background[monster->position.y][monster->position.x+1]= 'D';
+	display_background_color[monster->position.y][monster->position.x-1]= MONSTER_COLOR;
+	display_background_color[monster->position.y][monster->position.x]= MONSTER_COLOR;
+	display_background_color[monster->position.y][monster->position.x+1]= MONSTER_COLOR;
+	
+	send(dispid,1);
+
+	sleept(25);
+	
+	}
+	
+
+}
+
 void lay_egg(int init_egg_laying_position_y, int init_egg_laying_position_x){
 	/* Function for laying eggs.
 		
 	each egg is  a procces that will bocome a monster.
 	*/
 
-	int fall_time = global_timer%30;
+	int fall_time = tod%10;
+	int fall_tod = tod;
 	int falling_speed = 1000;
+	int speed_tod = tod;
 	int temp_x = init_egg_laying_position_x;
 	int temp_y = init_egg_laying_position_y;
+	MONSTER m;
+	
+	POSITION monsterPosition;
+
 	while (1){
-		if (global_timer%1000 == 0){
+		if (abs(tod - speed_tod) >= 1000){
+			
 		//display_background[init_egg_laying_position_y][init_egg_laying_position_x] = '*';
 
 			display_background[temp_y][temp_x] = ' ';
-			temp_y ++;
+			temp_y ++;									// update falling position.
 			display_background[temp_y][temp_x] = '*';
-			fall_time--;
+			fall_time--;		
 			send(dispid,1);
+			speed_tod = tod;
 		}
-		if (fall_time <= 0) {
+		if (fall_time < 0) {
 			// fall time is over, egg should lay on the floor (GREEN) for x secons and become a monster.
 			break;
 		}
@@ -308,11 +673,22 @@ void lay_egg(int init_egg_laying_position_y, int init_egg_laying_position_x){
 		temp_y ++;
 		display_background[temp_y][temp_x] = '*';
 	}
-	sleep(3);
+	
+
 	// make egg a monster, and start mooving it my AVIV'S move_monster() func.
-	display_background[temp_y][temp_x-1] = '(';
+	/*display_background[temp_y][temp_x-1] = '(';
 	display_background[temp_y][temp_x] = '*';
 	display_background[temp_y][temp_x+1] = ')';
+	*/
+	
+	
+	monsterPosition.x= temp_x;
+	monsterPosition.y= temp_y;
+	
+	m.position=monsterPosition;
+	m.direction='D';
+	//resume(create(drawMonster, INITSTK, INITPRIO, "drawMonster",1,m));
+	drawMonster(&m);
 }
 
 void move_chicken(CHICKEN *chicken_input){ // move chicken by stage setup.
@@ -343,16 +719,21 @@ void move_chicken(CHICKEN *chicken_input){ // move chicken by stage setup.
 
 void draw_chicken(CHICKEN *chicken_input){
 	CHICKEN *chicken = chicken_input;	// initiated chicken;
-	int eggs[3];						// TODO: make that array ina the size of (chicken->level)*3
-	int eggs_layed =0;
+	// TODO: make that array ina the size of (chicken->level)*3
+	int eggs_layed = chicken->level * 3;
 	int lay_egg_flag = 1;				// laying egg flag;
-	int stage_level = 2500;				// lay egg every 2.5 sec
+	int stage_level = 250;				// lay egg every 2.5 sec
 	int init_egg_laying_position_y = chicken->position.y + 1  ;
 	int init_egg_laying_position_x = chicken->position.x  ;
+	int max_enemies[MAX_ENEMIES];
 	int fall_time;
+	int temp_tod = tod;
+	int egg_tod = tod;
 
 	while (1){
-		if (global_timer%500 == 0){	// game run at 1000hz -> if global_timer%1000 is 0, then a second has passed.
+		//if (tod%1000 <= 10){	// game run at 1000hz -> if global_timer%1000 is 0, then a second has passed.
+		if (abs(tod - temp_tod) >= 100){	// game run at 1000hz -> if global_timer%1000 is 0, then a second has passed.
+			
 			display_background[chicken->position.y][chicken->position.x]= ' ';
 			display_background[chicken->position.y][chicken->position.x-1]= ' ';
 			display_background[chicken->position.y][chicken->position.x+1]= ' ';
@@ -360,26 +741,32 @@ void draw_chicken(CHICKEN *chicken_input){
 			display_background[chicken->position.y][chicken->position.x]= '^';
 			display_background[chicken->position.y][chicken->position.x-1]= '^';
 			display_background[chicken->position.y][chicken->position.x+1]= '=';
+			temp_tod = tod;
 		}
-		if (global_timer%stage_level == 0 && lay_egg_flag == 1){	// every stage has its allowed num of monsters/eggs
+		
+		if (lay_egg_flag == 1 && abs(tod - egg_tod) >= 2500){	// every stage has its allowed num of monsters/eggs
 			// lay egg	
+
 			//lay_egg(chicken);
 			lay_egg_flag = 0;	// dissable before laying egg.
-			fall_time = global_timer%5;
-			init_egg_laying_position_y = malloc(sizeof(int));
+			//init_egg_laying_position_y = malloc(sizeof(int));
 			init_egg_laying_position_y = chicken->position.y ;
 
-			init_egg_laying_position_x = malloc(sizeof(int));
+			//init_egg_laying_position_x = malloc(sizeof(int));
 			init_egg_laying_position_x = chicken->position.x ;
 
-			display_background[init_egg_laying_position_y+1][init_egg_laying_position_x] = '*';
-			resume( create(lay_egg, INITSTK, INITPRIO, "layed_egg", 2, init_egg_laying_position_y,init_egg_laying_position_x) );
+			
+			if(eggs_layed > 0){	// dont lay more eggs than stage x allow.
+				
+				display_background[init_egg_laying_position_y+1][init_egg_laying_position_x] = '*';
+				resume( max_enemies[eggs_layed--] = create(lay_egg, INITSTK, INITPRIO, "layed_egg", 2, init_egg_laying_position_y,init_egg_laying_position_x) );
+			}
 			resched();
+			egg_tod = tod;
 		}
 		else if (lay_egg_flag == 0){
 			lay_egg_flag = 1 ;
 		}
-
 		send(dispid,1);
 		
 	}
@@ -435,10 +822,9 @@ void draw_chicken(CHICKEN *chicken_input){
 			// by the function: pos = 2*(i*80 + j);
 			// heart 1
 			display_background[7][9] = '<';
-			display_background_color[7][9] = HEARTCOLLOR;
-			
+			display_background_color[7][9] = WALL_COLOR;
 			display_background[7][10] = 'B';
-			display_background_color[7][10] = HEARTCOLLOR;
+			display_background_color[7][10] = WALL_COLOR;
 
 			// heart 2
 			display_background[15][55] = '<';
@@ -460,11 +846,367 @@ void draw_chicken(CHICKEN *chicken_input){
 		send(dispid,1);
  }
 
+ /*------------------------------------------------------------------------
+ *  stage_2  --  print stage 2 hard_coded
+ *------------------------------------------------------------------------
+ */
+ void print_stage_2(){
+	int i,j,temp_j,pos;
+	int hole_flag =	0;
+	int edge_needed_left =1;
+	int edge_needed_right =0;
+	int hole_size = 5;
+	int number_of_hearts = 3;
+	
+		for(i = 0; i < 25; i++ )
+		{
+			for(j = 0; j < 80; j++)
+			{
+				pos = 2*(i*80 + j);
+				// print stage rounding square
+				if( i ==0 || j == 0 || i ==24 || j==79)
+				{
+					display_background_color[i][j] = WALL_COLOR;
+					continue;
+				}
+				else{ 
+					if(i == 5 && ((j <=50) || (j>60))){
+					display_background_color[i][j] = WALL_COLOR;
+					continue;
+					}
+					if(i == 4 && j>67){
+					display_background_color[i][j] = WALL_COLOR;
+					continue;
+					}
+					if(i == 3 && j>70){
+					display_background_color[i][j] = WALL_COLOR;
+					continue;
+					}
+					if(i >5 && i<13){
+						if (i==12 && j<10){
+						display_background_color[i][j] = WALL_COLOR;
+						continue;
+						}
+						if (i==11 && j<9){
+						display_background_color[i][j] = WALL_COLOR;
+						continue;
+						}
+						if (i==10 && j<8){
+						display_background_color[i][j] = WALL_COLOR;
+						continue;
+						}
+						if (i==9 && j<7){
+						display_background_color[i][j] = WALL_COLOR;
+						continue;
+						}
+						if (i==8 && (j<6 || j>45)){
+						display_background_color[i][j] = WALL_COLOR;
+						continue;
+						}
+						if (i==7 && j>50){
+						display_background_color[i][j] = WALL_COLOR;
+						continue;
+						}
+						if (i==6 && j>55){
+						display_background_color[i][j] = WALL_COLOR;
+						continue;
+						}
+						
+					}
+					if(i == 10 && (j >=30)){
+					display_background_color[i][j] = WALL_COLOR;
+					continue;
+					}
+					if (i== 13 || i==14 || i==15){
+						if(j<40 || j>60){
+						display_background_color[i][j] = WALL_COLOR;
+						continue;
+						}
+						if(i==13 && j>=45){
+						display_background_color[i][j] = WALL_COLOR;
+						continue;
+						}
+					}
+
+					if ((i== 15) && (j>=40 && j<55)){
+					display_background_color[i][j] = WALL_COLOR;
+					continue;
+					}
+					if ((i==16 && j>59) ||(i==17 && j>58)){
+					display_background_color[i][j] = WALL_COLOR;
+					continue;
+					}
+
+					if ((i== 18) && (j<20 || j>50)){
+					display_background_color[i][j] = WALL_COLOR;
+					continue;
+					}
+					if ((i== 19) && (j>35 && j<43)){
+					display_background_color[i][j] = WALL_COLOR;
+					continue;
+					}
+					if ((i== 20) && (j>30 && j<55)){
+					display_background_color[i][j] = WALL_COLOR;
+					continue;
+					}
+					if ((i== 21) && (j>20 && j<60)){
+					display_background_color[i][j] = WALL_COLOR;
+					continue;
+					}
+					
+					if (i> 21) {
+					display_background_color[i][j] = WALL_COLOR;
+					continue;
+					}
+				}
+
+					display_background_color[i][j] = EMPTY_SPACE;
+			}
+
+			// Print stage hearts.
+			// by the function: pos = 2*(i*80 + j);
+			// heart 1
+			display_background[7][9] = '<';
+			display_background_color[7][9] = WALL_COLOR;
+			display_background[7][10] = 'B';
+			display_background_color[7][10] = WALL_COLOR;
+
+			// heart 2
+			display_background[17][55] = '<';
+			display_background_color[17][55] = HEARTCOLLOR;
+			
+			display_background[17][56] = 'B';
+			display_background_color[17][56] = HEARTCOLLOR;
+			
+			// heart 3
+			display_background[21][9] = '<';
+			display_background_color[21][9] = HEARTCOLLOR;
+			
+			display_background[21][10] = 'B';
+			display_background_color[21][10] = HEARTCOLLOR;
+	
+			
+			drawChack();
+		}
+		send(dispid,1);
+ }
+ /*------------------------------------------------------------------------
+ *  stage_3  --  print stage 3 hard_coded
+ *------------------------------------------------------------------------
+ */
+ void print_stage_3(){
+	int i,j,temp_j,pos;
+	int hole_flag =	0;
+	int edge_needed_left =1;
+	int edge_needed_right =0;
+	int hole_size = 5;
+	int number_of_hearts = 3;
+	
+		for(i = 0; i < 25; i++ )
+		{
+			for(j = 0; j < 80; j++)
+			{
+				pos = 2*(i*80 + j);
+				// print stage rounding square
+				if( i ==0 || j == 0 || i ==24 || j==79)
+				{
+					display_background_color[i][j] = WALL_COLOR;
+					continue;
+				}
+				else{ 
+					if(i == 5 && ((j <=50) || (j>60))){
+					display_background_color[i][j] = WALL_COLOR;
+					continue;
+					}
+					if(i == 4 && j>67){
+					display_background_color[i][j] = WALL_COLOR;
+					continue;
+					}
+					if(i == 3 && j>70){
+					display_background_color[i][j] = WALL_COLOR;
+					continue;
+					}
+					if(i >5 && i<13){
+						if (i==12 && j<10){
+						display_background_color[i][j] = WALL_COLOR;
+						continue;
+						}
+						if (i==11 && j<9){
+						display_background_color[i][j] = WALL_COLOR;
+						continue;
+						}
+						if (i==10 && j<8){
+						display_background_color[i][j] = WALL_COLOR;
+						continue;
+						}
+						if (i==9 && j<7){
+						display_background_color[i][j] = WALL_COLOR;
+						continue;
+						}
+						if (i==8 && (j<6 || j>45)){
+						display_background_color[i][j] = WALL_COLOR;
+						continue;
+						}
+						if (i==7 && j>50){
+						display_background_color[i][j] = WALL_COLOR;
+						continue;
+						}
+						if (i==6 && j>55){
+						display_background_color[i][j] = WALL_COLOR;
+						continue;
+						}
+						
+					}
+					if(i == 10 && (j >=30)){
+					display_background_color[i][j] = WALL_COLOR;
+					continue;
+					}
+					if (i== 13 || i==14 || i==15){
+						if(j<40 || j>60){
+						display_background_color[i][j] = WALL_COLOR;
+						continue;
+						}
+						if(i==13 && j>=45){
+						display_background_color[i][j] = WALL_COLOR;
+						continue;
+						}
+					}
+
+					if ((i== 15) && (j>=40 && j<55)){
+					display_background_color[i][j] = WALL_COLOR;
+					continue;
+					}
+					if ((i==16 && j>59) ||(i==17 && j>58)){
+					display_background_color[i][j] = WALL_COLOR;
+					continue;
+					}
+
+					if ((i== 18) && (j<20 || j>50)){
+					display_background_color[i][j] = WALL_COLOR;
+					continue;
+					}
+					if ((i== 19) && (j>35 && j<43)){
+					display_background_color[i][j] = WALL_COLOR;
+					continue;
+					}
+					if ((i== 20) && (j>30 && j<55)){
+					display_background_color[i][j] = WALL_COLOR;
+					continue;
+					}
+					if ((i== 21) && (j>20 && j<60)){
+					display_background_color[i][j] = WALL_COLOR;
+					continue;
+					}
+					
+					if (i> 21) {
+					display_background_color[i][j] = WALL_COLOR;
+					continue;
+					}
+				}
+
+					display_background_color[i][j] = EMPTY_SPACE;
+			}
+
+			// Print stage hearts.
+			// by the function: pos = 2*(i*80 + j);
+			// heart 1
+			display_background[7][9] = '<';
+			display_background_color[7][9] = WALL_COLOR;
+			display_background[7][10] = 'B';
+			display_background_color[7][10] = WALL_COLOR;
+
+			// heart 2
+			display_background[17][55] = '<';
+			display_background_color[17][55] = HEARTCOLLOR;
+			
+			display_background[17][56] = 'B';
+			display_background_color[17][56] = HEARTCOLLOR;
+			
+			// heart 3
+			display_background[21][9] = '<';
+			display_background_color[21][9] = HEARTCOLLOR;
+			
+			display_background[21][10] = 'B';
+			display_background_color[21][10] = HEARTCOLLOR;
+	
+			
+			drawChack();
+		}
+
+		send(dispid,1);
+		resume( platform_3_pid = create(stage_3_platform, INITSTK, INITPRIO, "STAGE3PLAT1", 0) );
+		resume( platform_3_pid1 = create(stage_3_platform2, INITSTK, INITPRIO, "STAGE3PLAT2", 0) );
+ }
+ void platform(int min,int max,int hight,int movment,int left){	//min==1 max==20
+	int plat_tod;
+	int go_back=left;
+	int max_mov=0;
+	plat_tod=tod;
+
+	if (left==1) max_mov = movment;
+
+
+	while (1){
+		if (abs(tod-plat_tod) >= 1000){
+			
+			if (go_back==0){
+				display_background_color[hight][min] = EMPTY_SPACE;
+				display_background_color[hight][max] = WALL_COLOR;
+				min++;
+				max++;
+				max_mov++;
+			}
+			else{
+				display_background_color[hight][min] = WALL_COLOR;
+				display_background_color[hight][max] = EMPTY_SPACE;
+				min--;
+				max--;
+				max_mov--;
+			}
+			if(max_mov==movment){
+				go_back = 1;
+				min--;
+				max--;
+			}
+			if(max_mov==0){
+				go_back = 0;
+				min++;
+				max++;
+			}
+
+
+			
+			
+			plat_tod = tod;
+			send(dispid,1);	
+		}
+	} 
+ }
+ void stage_3_platform(){	//min==1 max==19 hight 18 movment 5
+		int min =1;
+		int max = 20;
+		int hight = 18;
+		int movment = 5;
+		int left = 0 ; 
+		platform(min,max,hight,movment,left);
+	}
+void stage_3_platform2(){	
+		int min =30;
+		int max = 78;
+		int hight = 10;
+		int movment = 7;
+		int left = 1;
+		platform(min,max,hight,movment,left);
+	}
+
+
   void stage_1(){
 	// create a chicken.
 	CHICKEN *chicken;
 	POSITION *chickenPosition;
 	int chicken_pid;
+	MONSTER *m;
+	POSITION *monsterPosition;
 	
 	print_stage_1();	// print stage on the screen
 	 
@@ -472,12 +1214,178 @@ void draw_chicken(CHICKEN *chicken_input){
 	chickenPosition=(POSITION *)malloc(sizeof(POSITION));
 	chickenPosition->x=7;
 	chickenPosition->y=2;
-	chicken->position=*chackPosition;
+	chicken->position=*chickenPosition;
 	chicken->level = 1;
 
 	resume( chicken_pid = create(draw_chicken, INITSTK, INITPRIO, "CHICKEN_DRAWER", 1, chicken) );
+	
+	  
  }
 
+ /*------------------------------------------------------------------------
+ *  stage_0 MENU  --  print stage 1 hard_coded
+ *------------------------------------------------------------------------
+ */
+ void print_stage_0(){
+	int i,j,temp_j,pos;
+	int hole_flag =	0;
+	//int edge_needed_left =1;
+	//int edge_needed_right =0;
+	//int hole_size = 5;
+	//int number_of_hearts = 3;
+	
+		for(i = 0; i < 25; i++ )
+		{
+			for(j = 0; j < 80; j++)
+			{
+				pos = 2*(i*80 + j);
+				// print stage rounding square
+				display_background_color[i][j] = EMPTY_SPACE;
+
+				if( i ==0 || j == 0 || i ==24 || j==79){
+					display_background_color[i][j] = WALL_COLOR;
+				}
+				/*
+				else if (i%4 == 0){		// print floors
+					
+					if (j < hole_size && edge_needed_left == 1 && edge_needed_right == 0){ // set flags for printing only left_hole
+						display_background_color[i][j] = EMPTY_SPACE;
+						
+					}
+
+					else if (j + hole_size > 80 && edge_needed_left == 0 && edge_needed_right == 1){ // set plags for printing right_hole
+						display_background_color[i][j] = EMPTY_SPACE;
+						
+					}
+					else{
+						display_background_color[i][j] = WALL_COLOR;
+					}
+				}
+				else{
+					display_background_color[i][j] = EMPTY_SPACE;
+				}
+				if (j == 79 && i%4 == 0){ // make stage 1 patterns (shti va erev)
+					edge_needed_left = 1 - edge_needed_left;
+					edge_needed_right = 1- edge_needed_right;
+				}
+*/
+			}
+			/*
+			// Print stage hearts.
+			// by the function: pos = 2*(i*80 + j);
+			// heart 1
+			display_background[7][9] = '<';
+			display_background_color[7][9] = WALL_COLOR;
+			display_background[7][10] = 'B';
+			display_background_color[7][10] = WALL_COLOR;
+
+			// heart 2
+			display_background[15][55] = '<';
+			display_background_color[15][55] = HEARTCOLLOR;
+			
+			display_background[15][56] = 'B';
+			display_background_color[15][56] = HEARTCOLLOR;
+			
+			// heart 3
+			display_background[19][9] = '<';
+			display_background_color[19][9] = HEARTCOLLOR;
+			
+			display_background[19][10] = 'B';
+			display_background_color[19][10] = HEARTCOLLOR;
+	
+			
+			drawChack();
+			*/
+		}
+		send(dispid,1);
+ }
+
+
+  void stage_0(){
+	// create a chicken.
+	//CHICKEN *chicken;
+	//POSITION *chickenPosition;
+	//int chicken_pid;
+	//MONSTER *m;
+	//POSITION *monsterPosition;
+	
+	print_stage_0();	// print stage on the screen
+	/* 
+	 // initiate chicken.
+	chickenPosition=(POSITION *)malloc(sizeof(POSITION));
+	chickenPosition->x=7;
+	chickenPosition->y=2;
+	chicken->position=*chickenPosition;
+	chicken->level = 1;
+
+	resume( chicken_pid = create(draw_chicken, INITSTK, INITPRIO, "CHICKEN_DRAWER", 1, chicken) );
+	*/
+	  
+ }
+
+ void stage_manager(){
+ 	 int stage_number;
+	 stage_number = receive();
+	 switch (stage_number)
+	{
+	/*
+		case 'R'://move  right
+		if((display_background_color[monster->position.y][(monster->position.x+2)] != WALL_COLOR))
+		{
+			
+			monster->position.x = (monster->position.x+1)%80;
+			sleept(50);
+			
+			
+		}
+		 else
+		 {
+			 monster->direction =randDirection();
+		 }
+		break;
+		case 'L'://move left
+		if((display_background_color[monster->position.y][(monster->position.x-2)] != WALL_COLOR))
+		{
+			monster->position.x = (monster->position.x-1)%80;
+			sleept(50);
+			
+		}
+		else
+		 {
+			 monster->direction =randDirection();
+		 }
+		break;
+		case 'U'://move up
+		if((display_background_color[monster->position.y-1][(monster->position.x)] != WALL_COLOR))
+		{
+			
+			monster->position.y = (monster->position.y-1)%25;
+
+			sleept(50);
+		}
+		else
+		 {
+			 monster->direction =randDirection();
+		 }
+		break;
+		case 'D'://move down
+			if((display_background_color[monster->position.y+1][(monster->position.x)] != WALL_COLOR))
+		{
+			
+			monster->position.y = (monster->position.y+1)%25;
+			
+			sleept(50);
+		}
+		else
+		 {
+			 monster->direction =randDirection();
+		 }
+		 */
+		break;
+	}
+ }
+
+ 
 void displayer( void )
 {	//This process display the matrix, receive message (and return to ready) with every change in the screen matrix
 	int i,j,pos;
@@ -492,21 +1400,52 @@ void displayer( void )
 					   drawInPosL(pos,display_background[i][j],display_background_color[i][j]);	// display the whole screen
 				   }
 			   }
+			   signal(displayer_sem);
          } //while
 } // prntr
 
 void receiver()
 {
-  while(1)
-  {
-    char temp;
-    temp = receive();
-    rear++;
-    ch_arr[rear] = temp;
-    if (front == -1)
-       front = 0;
-  } // while
+	while(1)
+	{
+		char temp;
+		temp = receive();
+		rear++;
+		ch_arr[rear] = temp;
+		if (front == -1)
+			front = 0;
+		} // while
 } //  receiver
+
+
+void updateter()
+{
+	int pressed,scan;
+	while(1)
+	{
+		pressed = receive();
+		scan = pressed;
+		if ((scan == 30)) // 'A' pressed
+			moveChack('L');
+		else if ((scan == 32)) // 'D' pressed
+			moveChack('R');
+		else if ((scan == 17)) // 'W' pressed
+			moveChack('U');
+		else if ((scan == 31)) // 'S' pressed
+		{
+			moveChack('D');
+		}
+		else if (scan == 18)	// 'E' pressed
+		{
+			resume( create(throw_granade, INITSTK, INITPRIO, "Granade", 1,0) ); // Throw granade right.
+		}
+		else if (scan == 16)	// 'Q' pressed
+		{
+			resume( create(throw_granade, INITSTK, INITPRIO, "Granade", 1,1) ); // Throw granade left.
+		}
+	}
+} // updater 
+
 
 int sched_arr_pid[5] = {-1};
 int sched_arr_int[5] = {-1};
@@ -538,91 +1477,29 @@ SYSCALL schedule(int no_of_pids, int cycle_length, int pid1, ...)
 
 xmain()
 {
-	// Take over x70isr
-	char old_0A1h_mask, old_70h_A_mask;
-	int local_flag = 1, x71h1=0, x71h2=0, x71h3;
+	char *test = strdup("chack_name");
+	setLatch(1193);		// for working in 1000hz +-
+	SetScreen();		//intiate screen mode
+	
 
-	old0x70isr = getvect(0x70);
-	setvect(0x70, new0x70isr);
-
-	asm {
-		CLI         // Disable interrupts
-		PUSH AX     // Interrupt may occur while updating
-
-		IN AL,0A1h  // Make sure IRQ8 is not masked
-		MOV old_0A1h_mask,AL
-		AND AL,0FEh // Set bit 0 of port 0A1 to zero
-		OUT 0A1h,AL //
-
-		IN AL,70h   // Set up "Write into status register A"
-		MOV AL,0Ah  //
-		OUT 70h,AL  //
-		MOV AL,8Ah  //
-		OUT 70h,AL  //
-		IN AL,71h   //
-		MOV BYTE PTR x71h1,AL  // Save old value
-		MOV old_70h_A_mask,AL
-		AND AL,11110000b // Change only Rate
-		OR AL,0110b // Make sure it is Rate =0110 (1Khz)
-		OUT 71h,AL  // Write into status register A
-		IN AL,71h   // Read to confirm write
-
-
-
-		IN AL,70h  // Set up "Write into status register B"
-		MOV AL,0Bh //
-		OUT 70h,AL //
-		MOV AL,8Bh //
-		OUT 70h,AL //
-		IN AL,71h  //
-		MOV BYTE PTR x71h2,AL // Save Old value
-		AND AL,8Fh // Mask out PI,AI,UI
-		OR AL,40h  // Enable periodic interrupts (PI=1) only
-		OUT 71h,AL // Write into status register  B
-		IN AL,71h  // Read to confirm write
-		MOV byte ptr x71h3,AL // Save old value
-
-		IN AL,021h  // Make sure IRQ2 is not masked
-		AND AL,0FBh // Write 0 to bit 2 of port 21h
-		OUT 021h,AL // Write to port 21h
-
-		IN AL,70h  // Set up "Read into status resister C"
-		MOV AL,0Ch // Required for "Write into port 71h"
-		OUT 70h,AL
-		IN AL,70h
-		MOV AL,8Ch // 
-		OUT 70h,AL
-		IN AL,71h  // Read status register C 
-					  // (we do nothing with it)
-
-		IN AL,70h  // Set up "Read into status resister C"
-		MOV AL,0Dh // Required for "Write into port 71h"
-		OUT 70h,AL
-		IN AL,70h
-		MOV AL,8Dh
-		OUT 70h,AL
-		IN AL,71h  // Read status register D 
-					// (we do nothing with it)
-
-
-		STI
-		POP AX
-	  } // asm
+    resume( dispid = create(displayer, INITSTK, INITPRIO, "DISPLAYER", 0) );
+    resume( recvpid = create(receiver, INITSTK, INITPRIO+3, "RECIVEVER", 0) );
+	resume( uppid = create(updateter, INITSTK, INITPRIO, "UPDATER", 0) );
+	
+	resume( stage_3_pid = create(print_stage_3, INITSTK, INITPRIO, "STAGE1", 0) );
+	//resume( stage_0_pid = create(stage_0, INITSTK, INITPRIO, "MENU", 0) );
+    
+	receiver_pid =recvpid;  
+    set_new_int9_newisr();
 		
-		SetScreen();		//intiate screen mode
-		//print();
-        resume( dispid = create(displayer, INITSTK, INITPRIO, "DISPLAYER", 0) );
-        resume( recvpid = create(receiver, INITSTK, INITPRIO+3, "RECIVEVER", 0) );
-       // resume( uppid = create(updateter, INITSTK, INITPRIO, "UPDATER", 0) );
-		resume( stage_1_pid = create(stage_1, INITSTK, INITPRIO, "STAGE1", 0) );
-        receiver_pid =recvpid;  
-        set_new_int9_newisr();
-		
-		chackPosition=(POSITION *)malloc(sizeof(POSITION));
-		chackPosition->x=7;
-		chackPosition->y=2;
-		chack->position=*chackPosition;
-		chack->life = NUMOFLIFES;
+	chackPosition=(POSITION *)malloc(sizeof(POSITION));
+	chackPosition->x=7;
+	chackPosition->y=2;
 
-    schedule(2,57, dispid, 0,  uppid, 29,stage_1_pid,30);
+	chack->name = test;
+	chack->position=*chackPosition;
+	chack->life = NUMOFLIFES;
+	chack->gravity=1;
+		
+    schedule(2,57, dispid, 0,  uppid, 29, stage_3_pid,30);
 } // xmain
