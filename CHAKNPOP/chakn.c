@@ -9,6 +9,85 @@
 #include <butler.h>
 #include <sleep.h>
 
+#define ON (1)
+#define OFF (0)
+  /*------------------------------------------------
+  ChangeSpeaker - Turn speaker on or off. */
+
+void ChangeSpeaker(int status)
+{
+	int portval;
+	//   portval = inportb( 0x61 );
+
+	portval = 0;
+	asm{
+		PUSH AX
+		MOV AL,61h
+		MOV byte ptr portval,AL
+		POP AX
+	}
+
+		if (status == ON)
+			portval |= 0x03;
+		else
+			portval &= ~0x03;
+	// outportb( 0x61, portval );
+	asm{
+		PUSH AX
+		MOV AX,portval
+		OUT 61h,AL
+		POP AX
+	} // asm
+
+} /*--ChangeSpeaker( )----------*/
+void Sound(int hertz)
+{
+	unsigned divisor = 1193180L / hertz;
+
+	ChangeSpeaker(ON);
+
+	//        outportb( 0x43, 0xB6 );
+	asm{
+		PUSH AX
+		MOV AL,0B6h
+		OUT 43h,AL
+		POP AX
+	} // asm
+
+
+	  //       outportb( 0x42, divisor & 0xFF ) ;
+		asm{
+		PUSH AX
+		MOV AX,divisor
+		AND AX,0FFh
+		OUT 42h,AL
+		POP AX
+	} // asm
+
+
+	  //        outportb( 0x42, divisor >> 8 ) ;
+
+		asm{
+		PUSH AX
+		MOV AX,divisor
+		MOV AL,AH
+		OUT 42h,AL
+		POP AX
+	} // asm
+
+} /*--Sound( )-----*/
+
+void NoSound(void)
+{
+	ChangeSpeaker(OFF);
+} /*--NoSound( )------*/
+void grenade_sound() {
+	Sound(20);
+	sleept(600);
+	NoSound();
+	sleept(70);
+
+}
 extern SYSCALL  sleept(int);
 extern SYSCALL	resched();
 extern struct intmap far *sys_imp;
@@ -482,17 +561,17 @@ void throw_granade(int direction){
 	display_background[temp_y][temp_x-1] = '<';
 
 
-	// Ugly buisy/wait loop.
+	// Ugly busy/wait loop.
 	while (abs(tod - granade_explode_timer) <= 3000){
 	}
-
+	
 	for (y = 0; y <= 1; y++){
 		for(x = -1; x <= 1; x++){
 			if (display_background_color[temp_y - y][temp_x + x] == HEARTCOLLOR){
 				free_heart(y, temp_y, x, temp_x);
 			}
 			display_background_color[temp_y - y][temp_x + x]= GRANADE_SMOKE_COLOR;
-
+			
 		}
 	}
 	if (display_background_color[temp_y][temp_x - 2] == HEARTCOLLOR || display_background_color[temp_y][temp_x + 2] == HEARTCOLLOR){
@@ -505,7 +584,9 @@ void throw_granade(int direction){
 	display_background[temp_y][temp_x-1] = ' ';
 
 	// Reset granade_explode_timer timer;
+
 	granade_explode_timer = tod;
+	grenade_sound();
 	while (abs(tod - granade_explode_timer) <= 3000){
 	}
 
@@ -534,7 +615,22 @@ void moveMonster( MONSTER *monster)
 		case 'R'://move  right
 		if((display_background_color[monster->position.y][(monster->position.x+2)] != WALL_COLOR))
 		{
-			
+			monster->oldAttribute[0] = monster->oldAttribute[1];
+			monster->oldAttribute[1] = monster->oldAttribute[2];
+			monster->oldAttribute[2] = display_background_color[monster->position.y][monster->position.x + 2];
+			monster->oldChar[0] = monster->oldChar[1];
+			monster->oldChar[1] = monster->oldChar[2];
+			monster->oldChar[2] = display_background[monster->position.y][monster->position.x + 2];
+
+
+			monster->oldPosition.y = monster->position.y;
+			monster->oldPosition.x = monster->position.x;
+			display_background[monster->oldPosition.y][monster->oldPosition.x - 1] = monster->oldChar[0];
+			display_background[monster->oldPosition.y][monster->oldPosition.x] = monster->oldChar[1];
+			display_background[monster->oldPosition.y][monster->oldPosition.x + 1] = monster->oldChar[2];
+			display_background_color[monster->oldPosition.y][monster->oldPosition.x - 1] = monster->oldAttribute[0];
+			display_background_color[monster->oldPosition.y][monster->oldPosition.x] = monster->oldAttribute[1];
+			display_background_color[monster->oldPosition.y][monster->oldPosition.x + 1] = monster->oldAttribute[2];
 			monster->position.x = (monster->position.x+1)%80;
 			sleept(50);
 			
@@ -548,6 +644,22 @@ void moveMonster( MONSTER *monster)
 		case 'L'://move left
 		if((display_background_color[monster->position.y][(monster->position.x-2)] != WALL_COLOR))
 		{
+			monster->oldAttribute[0] = display_background_color[monster->position.y][monster->position.x - 2];
+			monster->oldAttribute[1] = monster->oldAttribute[0];
+			monster->oldAttribute[2] = monster->oldAttribute[1];
+			monster->oldChar[0] = display_background[monster->position.y][monster->position.x - 2];
+			monster->oldChar[1] = monster->oldChar[0];
+			monster->oldChar[2] = monster->oldChar[1];
+
+
+			monster->oldPosition.y = monster->position.y;
+			monster->oldPosition.x = monster->position.x;
+			display_background[monster->oldPosition.y][monster->oldPosition.x - 1] = monster->oldChar[0];
+			display_background[monster->oldPosition.y][monster->oldPosition.x] = monster->oldChar[1];
+			display_background[monster->oldPosition.y][monster->oldPosition.x + 1] = monster->oldChar[2];
+			display_background_color[monster->oldPosition.y][monster->oldPosition.x - 1] = monster->oldAttribute[0];
+			display_background_color[monster->oldPosition.y][monster->oldPosition.x] = monster->oldAttribute[1];
+			display_background_color[monster->oldPosition.y][monster->oldPosition.x + 1] = monster->oldAttribute[2];
 			monster->position.x = (monster->position.x-1)%80;
 			sleept(50);
 			
@@ -560,7 +672,21 @@ void moveMonster( MONSTER *monster)
 		case 'U'://move up
 		if((display_background_color[monster->position.y-1][(monster->position.x)] != WALL_COLOR))
 		{
-			
+			monster->oldAttribute[0] =EMPTY_SPACE;
+			monster->oldAttribute[1] = EMPTY_SPACE;
+			monster->oldAttribute[2] = EMPTY_SPACE;
+			monster->oldChar[0] =' ';
+			monster->oldChar[1] = ' ';
+			monster->oldChar[2] = ' ';
+
+			monster->oldPosition.y = monster->position.y;
+			monster->oldPosition.x = monster->position.x;
+			display_background[monster->oldPosition.y][monster->oldPosition.x - 1] = monster->oldChar[0];
+			display_background[monster->oldPosition.y][monster->oldPosition.x] = monster->oldChar[1];
+			display_background[monster->oldPosition.y][monster->oldPosition.x + 1] = monster->oldChar[2];
+			display_background_color[monster->oldPosition.y][monster->oldPosition.x - 1] = monster->oldAttribute[0];
+			display_background_color[monster->oldPosition.y][monster->oldPosition.x] = monster->oldAttribute[1];
+			display_background_color[monster->oldPosition.y][monster->oldPosition.x + 1] = monster->oldAttribute[2];
 			monster->position.y = (monster->position.y-1)%25;
 
 			sleept(50);
@@ -573,7 +699,21 @@ void moveMonster( MONSTER *monster)
 		case 'D'://move down
 			if((display_background_color[monster->position.y+1][(monster->position.x)] != WALL_COLOR))
 		{
-			
+			monster->oldAttribute[0] = EMPTY_SPACE;
+			monster->oldAttribute[1] = EMPTY_SPACE;
+			monster->oldAttribute[2] = EMPTY_SPACE;
+			monster->oldChar[0] = ' ';
+			monster->oldChar[1] = ' ';
+			monster->oldChar[2] = ' ';
+
+			monster->oldPosition.y = monster->position.y;
+			monster->oldPosition.x = monster->position.x;
+			display_background[monster->oldPosition.y][monster->oldPosition.x - 1] = monster->oldChar[0];
+			display_background[monster->oldPosition.y][monster->oldPosition.x] = monster->oldChar[1];
+			display_background[monster->oldPosition.y][monster->oldPosition.x + 1] = monster->oldChar[2];
+			display_background_color[monster->oldPosition.y][monster->oldPosition.x - 1] = monster->oldAttribute[0];
+			display_background_color[monster->oldPosition.y][monster->oldPosition.x] = monster->oldAttribute[1];
+			display_background_color[monster->oldPosition.y][monster->oldPosition.x + 1] = monster->oldAttribute[2];
 			monster->position.y = (monster->position.y+1)%25;
 			
 			sleept(50);
@@ -592,20 +732,8 @@ void drawMonster(MONSTER *monster)
 	while(1)
 	{
 	
-	monster->oldPosition.y=monster->position.y;
-	monster->oldPosition.x=monster->position.x;
-	monster->oldAttribute[0]=display_background_color[monster->position.y][monster->position.x-1];
-	monster->oldAttribute[1]=display_background_color[monster->position.y][monster->position.x];
-	monster->oldAttribute[2]=display_background_color[monster->position.y][monster->position.x+1];
-	monster->oldChar[0]=display_background[monster->position.y][monster->position.x-1];
-	monster->oldChar[1]=display_background[monster->position.y][monster->position.x];
-	monster->oldChar[2]=display_background[monster->position.y][monster->position.x+1];
-	display_background[monster->position.y][monster->position.x-1]= ' ';
-	display_background[monster->position.y][monster->position.x]= ' ';
-	display_background[monster->position.y][monster->position.x+1]= ' ';
-	display_background_color[monster->position.y][monster->position.x-1]= EMPTY_SPACE;
-	display_background_color[monster->position.y][monster->position.x]= EMPTY_SPACE;
-	display_background_color[monster->position.y][monster->position.x+1]= EMPTY_SPACE;
+	
+	
 	
 	moveMonster(monster);
 
@@ -687,6 +815,12 @@ void lay_egg(int init_egg_laying_position_y, int init_egg_laying_position_x){
 	
 	m.position=monsterPosition;
 	m.direction='D';
+	m.oldAttribute[0] = EMPTY_SPACE;
+	m.oldAttribute[1] = EMPTY_SPACE;
+	m.oldAttribute[2] = EMPTY_SPACE;
+	m.oldChar[0] = ' ';
+	m.oldChar[1] = ' ';
+	m.oldChar[2] = ' ';
 	//resume(create(drawMonster, INITSTK, INITPRIO, "drawMonster",1,m));
 	drawMonster(&m);
 }
@@ -1489,6 +1623,57 @@ void updateter()
 	}
 } // updater 
 
+void sound()
+{
+	
+	while (1)
+	{
+		Sound(400);
+		sleept(30);
+		Sound(77);
+		sleept(30);
+		Sound(90);
+		sleept(30);
+		Sound(110);
+		sleept(30);
+		Sound(120);
+		sleept(30);
+		Sound(30);
+		sleept(30);
+		Sound(77);
+		sleept(60);
+		Sound(110);
+		sleept(30);
+		Sound(120);
+		sleept(60);
+		Sound(30);
+		sleept(30);
+		Sound(77);
+		sleept(60);
+		Sound(110);
+		sleept(30);
+		Sound(120);
+		sleept(30);
+		Sound(70);
+		sleept(30);
+		Sound(77);
+		sleept(60);
+		asm{
+			CLI
+			PUSH AX
+			MOV AL,036h
+			OUT 43h,AL
+			MOV AX,0
+			OUT 40h,AL
+			MOV AL,AH
+			OUT 40h,AL
+			POP AX
+		} // asm
+	}
+	NoSound();
+	return(0);
+}
+
 
 int sched_arr_pid[5] = {-1};
 int sched_arr_int[5] = {-1};
@@ -1531,7 +1716,7 @@ xmain()
 	
 	resume( stage_3_pid = create(stage_3, INITSTK, INITPRIO, "STAGE3", 0) );
 	//resume( stage_0_pid = create(stage_0, INITSTK, INITPRIO, "MENU", 0) );
-    
+    //resume(sound_id = create(sound, INITSTK, INITPRIO, "sound", 0));
 	receiver_pid =recvpid;  
     set_new_int9_newisr();
 		
