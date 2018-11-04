@@ -87,7 +87,7 @@ void interrupt new0x70isr(void)
 int displayer_sem = 1; 
 int receiver_pid;
 int (*old9newisr)(int);
- int uppid, dispid, recvpid, stage_1_pid;
+ int uppid, dispid, recvpid, stage_1_pid, stage_0_pid;
 
 
 INTPROC new_int9(int mdevno)
@@ -431,7 +431,7 @@ void throw_granade(int direction){
 		}
 	}
 
-	// fall until granade hit breen ground.
+	// Fall until granade hit breen ground.
 	while(display_background_color[temp_y+1][temp_x] != 40){
 		display_background[temp_y][temp_x-1] = ' ';
 		display_background[temp_y][temp_x+1] = ' ';
@@ -801,11 +801,6 @@ void draw_chicken(CHICKEN *chicken_input){
 		send(dispid,1);
  }
 
- 
-
-
- 
-
 
   void stage_1(){
 	// create a chicken.
@@ -826,6 +821,107 @@ void draw_chicken(CHICKEN *chicken_input){
 
 	resume( chicken_pid = create(draw_chicken, INITSTK, INITPRIO, "CHICKEN_DRAWER", 1, chicken) );
 	
+	  
+ }
+
+ /*------------------------------------------------------------------------
+ *  stage_0 MENU  --  print stage 1 hard_coded
+ *------------------------------------------------------------------------
+ */
+ void print_stage_0(){
+	int i,j,temp_j,pos;
+	int hole_flag =	0;
+	//int edge_needed_left =1;
+	//int edge_needed_right =0;
+	//int hole_size = 5;
+	//int number_of_hearts = 3;
+	
+		for(i = 0; i < 25; i++ )
+		{
+			for(j = 0; j < 80; j++)
+			{
+				pos = 2*(i*80 + j);
+				// print stage rounding square
+				display_background_color[i][j] = EMPTY_SPACE;
+
+				if( i ==0 || j == 0 || i ==24 || j==79){
+					display_background_color[i][j] = WALL_COLOR;
+				}
+				/*
+				else if (i%4 == 0){		// print floors
+					
+					if (j < hole_size && edge_needed_left == 1 && edge_needed_right == 0){ // set flags for printing only left_hole
+						display_background_color[i][j] = EMPTY_SPACE;
+						
+					}
+
+					else if (j + hole_size > 80 && edge_needed_left == 0 && edge_needed_right == 1){ // set plags for printing right_hole
+						display_background_color[i][j] = EMPTY_SPACE;
+						
+					}
+					else{
+						display_background_color[i][j] = WALL_COLOR;
+					}
+				}
+				else{
+					display_background_color[i][j] = EMPTY_SPACE;
+				}
+				if (j == 79 && i%4 == 0){ // make stage 1 patterns (shti va erev)
+					edge_needed_left = 1 - edge_needed_left;
+					edge_needed_right = 1- edge_needed_right;
+				}
+*/
+			}
+			/*
+			// Print stage hearts.
+			// by the function: pos = 2*(i*80 + j);
+			// heart 1
+			display_background[7][9] = '<';
+			display_background_color[7][9] = WALL_COLOR;
+			display_background[7][10] = 'B';
+			display_background_color[7][10] = WALL_COLOR;
+
+			// heart 2
+			display_background[15][55] = '<';
+			display_background_color[15][55] = HEARTCOLLOR;
+			
+			display_background[15][56] = 'B';
+			display_background_color[15][56] = HEARTCOLLOR;
+			
+			// heart 3
+			display_background[19][9] = '<';
+			display_background_color[19][9] = HEARTCOLLOR;
+			
+			display_background[19][10] = 'B';
+			display_background_color[19][10] = HEARTCOLLOR;
+	
+			
+			drawChack();
+			*/
+		}
+		send(dispid,1);
+ }
+
+
+  void stage_0(){
+	// create a chicken.
+	//CHICKEN *chicken;
+	//POSITION *chickenPosition;
+	//int chicken_pid;
+	//MONSTER *m;
+	//POSITION *monsterPosition;
+	
+	print_stage_0();	// print stage on the screen
+	/* 
+	 // initiate chicken.
+	chickenPosition=(POSITION *)malloc(sizeof(POSITION));
+	chickenPosition->x=7;
+	chickenPosition->y=2;
+	chicken->position=*chickenPosition;
+	chicken->level = 1;
+
+	resume( chicken_pid = create(draw_chicken, INITSTK, INITPRIO, "CHICKEN_DRAWER", 1, chicken) );
+	*/
 	  
  }
 
@@ -878,7 +974,6 @@ void updateter()
 		{
 			moveChack('D');
 		}
-
 		else if (scan == 18)	// 'E' pressed
 		{
 			resume( create(throw_granade, INITSTK, INITPRIO, "Granade", 1,0) ); // Throw granade right.
@@ -921,19 +1016,24 @@ SYSCALL schedule(int no_of_pids, int cycle_length, int pid1, ...)
 
 xmain()
 {
+	char *test = strdup("chack_name");
 	setLatch(1193);		// for working in 1000hz +-
 	SetScreen();		//intiate screen mode
 	
+
     resume( dispid = create(displayer, INITSTK, INITPRIO, "DISPLAYER", 0) );
     resume( recvpid = create(receiver, INITSTK, INITPRIO+3, "RECIVEVER", 0) );
 	resume( uppid = create(updateter, INITSTK, INITPRIO, "UPDATER", 0) );
 	resume( stage_1_pid = create(stage_1, INITSTK, INITPRIO, "STAGE1", 0) );
+	//resume( stage_0_pid = create(stage_0, INITSTK, INITPRIO, "MENU", 0) );
     receiver_pid =recvpid;  
     set_new_int9_newisr();
 		
 	chackPosition=(POSITION *)malloc(sizeof(POSITION));
 	chackPosition->x=7;
 	chackPosition->y=2;
+
+	chack->name = test;
 	chack->position=*chackPosition;
 	chack->life = NUMOFLIFES;
 	chack->gravity=1;

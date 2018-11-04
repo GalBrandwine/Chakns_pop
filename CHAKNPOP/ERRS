@@ -6,15 +6,18 @@ Warning xinu4win\newsrc\gm\chaknpop\aviv.c 171: Unreachable code in function ran
 Warning xinu4win\newsrc\gm\chaknpop\aviv.c 174: Unreachable code in function randDirection
 Warning xinu4win\newsrc\gm\chaknpop\aviv.c 177: Unreachable code in function randDirection
 Warning xinu4win\newsrc\gm\chaknpop\aviv.c 179: Function should return a value in function randDirection
-Warning xinu4win\newsrc\gm\chaknpop\aviv.c 648: 'falling_speed' is assigned a value that is never used in function lay_egg
-Warning xinu4win\newsrc\gm\chaknpop\aviv.c 648: 'fall_tod' is assigned a value that is never used in function lay_egg
-Warning xinu4win\newsrc\gm\chaknpop\aviv.c 729: 'stage_level' is assigned a value that is never used in function draw_chicken
-Warning xinu4win\newsrc\gm\chaknpop\aviv.c 803: 'number_of_hearts' is assigned a value that is never used in function print_stage_1
-Warning xinu4win\newsrc\gm\chaknpop\aviv.c 803: 'hole_flag' is assigned a value that is never used in function print_stage_1
-Warning xinu4win\newsrc\gm\chaknpop\aviv.c 803: 'pos' is assigned a value that is never used in function print_stage_1
-Warning xinu4win\newsrc\gm\chaknpop\aviv.c 831: 'chicken_pid' is assigned a value that is never used in function stage_1
-Warning xinu4win\newsrc\gm\chaknpop\aviv.c 921: Function should return a value in function schedule
-Warning xinu4win\newsrc\gm\chaknpop\aviv.c 943: Function should return a value in function xmain
+Warning xinu4win\newsrc\gm\chaknpop\aviv.c 647: 'falling_speed' is assigned a value that is never used in function lay_egg
+Warning xinu4win\newsrc\gm\chaknpop\aviv.c 647: 'fall_tod' is assigned a value that is never used in function lay_egg
+Warning xinu4win\newsrc\gm\chaknpop\aviv.c 728: 'stage_level' is assigned a value that is never used in function draw_chicken
+Warning xinu4win\newsrc\gm\chaknpop\aviv.c 802: 'number_of_hearts' is assigned a value that is never used in function print_stage_1
+Warning xinu4win\newsrc\gm\chaknpop\aviv.c 802: 'hole_flag' is assigned a value that is never used in function print_stage_1
+Warning xinu4win\newsrc\gm\chaknpop\aviv.c 802: 'pos' is assigned a value that is never used in function print_stage_1
+Warning xinu4win\newsrc\gm\chaknpop\aviv.c 825: 'chicken_pid' is assigned a value that is never used in function stage_1
+Warning xinu4win\newsrc\gm\chaknpop\aviv.c 903: 'hole_flag' is assigned a value that is never used in function print_stage_0
+Warning xinu4win\newsrc\gm\chaknpop\aviv.c 903: 'pos' is assigned a value that is never used in function print_stage_0
+Warning xinu4win\newsrc\gm\chaknpop\aviv.c 1015: Function should return a value in function schedule
+Warning xinu4win\newsrc\gm\chaknpop\aviv.c 1019: Nonportable pointer conversion in function xmain
+Warning xinu4win\newsrc\gm\chaknpop\aviv.c 1042: Function should return a value in function xmain
 Turbo Link  Version 5.0 Copyright (c) 1992 Borland International
 
 	Available memory 4088060
