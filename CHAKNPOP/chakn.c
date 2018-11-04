@@ -119,7 +119,7 @@ int current_stage = 0;
 int displayer_sem = 1; 
 int receiver_pid;
 int (*old9newisr)(int);
-int uppid, dispid, recvpid, stage_manager_pid, stage_0_pid, stage_1_pid, stage_2_pid, stage_3_pid, platform_3_pid, platform_3_pid1;
+int uppid, dispid, recvpid, stage_manager_pid, stage_0_pid, stage_1_pid, stage_2_pid, stage_3_pid, platform_3_pid, platform_3_pid1,sound_id ;
 volatile int global_flag;
 volatile int global_timer =0 ;
 
@@ -456,7 +456,8 @@ void moveChack(char side)
 			chack->position.y = (chack->position.y-1)%25;
 			jumpCounter++;
 			drawChack();
-			sleept(1);
+			sleept(100);
+			
 		}
 		if(display_background_color[chack->position.y-1][(chack->position.x)] == WALL_COLOR){
 			chack->gravity=0;
@@ -471,7 +472,7 @@ void moveChack(char side)
 		chack->position.y = (chack->position.y+1);
 		
 		drawChack();
-		sleept(1);
+		sleept(100);
 	}
 	break;
 }
@@ -494,7 +495,7 @@ void moveChack(char side)
 		display_background[chack->position.y][chack->position.x+1]= ' ';
 		chack->position.y = (chack->position.y+1);
 		drawChack();
-		sleept(1);
+		sleept(100);
 	}
 	drawChack();
 }
@@ -1493,47 +1494,66 @@ void sound()
 	
 	while (1)
 	{
+		Sound(800);
+		sleept(500);
+		Sound(700);
+		sleept(500);
+		Sound(650);
+		sleept(500);
+		Sound(600);
+		sleept(500);
 		Sound(400);
-		sleept(30);
+		sleept(500);
+		Sound(500);
+		sleept(350);
+		Sound(600);
+		sleept(600);
+		Sound(500);
+		sleept(700);
+		Sound(400);
+		sleept(450);
+		Sound(300);
+		sleept(300);
+		Sound(400);
+		sleept(100);
+		
+		
+		/*good for something*/
+		//Sound(1100);
+		//sleept(50);
+		
+		/*
+		Sound(120);
+		sleept(500);
 		Sound(77);
-		sleept(30);
+		sleept(500);
 		Sound(90);
-		sleept(30);
+		sleept(500);
 		Sound(110);
-		sleept(30);
+		sleept(500);
 		Sound(120);
-		sleept(30);
-		Sound(30);
-		sleept(30);
+		sleept(500);
+		Sound(500);
+		sleept(500);
 		Sound(77);
-		sleept(60);
+		sleept(800);
 		Sound(110);
-		sleept(30);
+		sleept(500);
 		Sound(120);
-		sleept(60);
-		Sound(30);
-		sleept(30);
+		sleept(800);
+		Sound(500);
+		sleept(500);
 		Sound(77);
-		sleept(60);
+		sleept(800);
 		Sound(110);
-		sleept(30);
+		sleept(500);
 		Sound(120);
-		sleept(30);
+		sleept(500);
 		Sound(70);
-		sleept(30);
+		sleept(500);
 		Sound(77);
-		sleept(60);
-		asm{
-			CLI
-			PUSH AX
-			MOV AL,036h
-			OUT 43h,AL
-			MOV AX,0
-			OUT 40h,AL
-			MOV AL,AH
-			OUT 40h,AL
-			POP AX
-		} // asm
+		sleept(800);
+		*/
 	}
 	NoSound();
 	return(0);
@@ -1585,7 +1605,7 @@ xmain()
 	stage_1_pid = create(stage_1, INITSTK, INITPRIO, "STAGE1", 0);
 	stage_2_pid = create(stage_2, INITSTK, INITPRIO, "STAGE2", 0);
 	stage_3_pid = create(stage_3, INITSTK, INITPRIO, "STAGE3", 0);
-    //resume(sound_id = create(sound, INITSTK, INITPRIO, "sound", 0));
+    resume(sound_id = create(sound, INITSTK, INITPRIO, "sound", 0));
 	
 	receiver_pid =recvpid;  
     set_new_int9_newisr();
