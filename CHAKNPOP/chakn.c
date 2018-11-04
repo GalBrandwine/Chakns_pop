@@ -16,7 +16,10 @@
 
 
 
-  int new_stage =0;
+  int new_stage =0;					//kill button for monsters and chickens
+  int chack_alive = 1;				//chack can die if its 1
+  int kill_world=0;					//shutdown
+  int kill_monster = 0;					//monster killed chak?
 void ChangeSpeaker(int status)
 {
 	int portval;
@@ -399,13 +402,28 @@ void drawChack()
 reduce_life(){
 	switch (chack->life){
 		case 3: 
-		display_background[0][3] = ' ';
+			display_background[0][1] = 'L';
+			display_background[0][2] = 'I';
+			display_background[0][3] = 'F';
+			display_background[0][4] = 'E';
+			display_background[0][5] = ':';
+			display_background[0][6] = '2';
 		break;
 		case 2:
-		display_background[0][2] = ' ';
+			display_background[0][1] = 'L';
+			display_background[0][2] = 'I';
+			display_background[0][3] = 'F';
+			display_background[0][4] = 'E';
+			display_background[0][5] = ':';
+			display_background[0][6] = '1';
 		break;
 		case 1:
-		display_background[0][1] = ' ';
+			display_background[0][1] = 'L';
+			display_background[0][2] = 'I';
+			display_background[0][3] = 'F';
+			display_background[0][4] = 'E';
+			display_background[0][5] = ':';
+			display_background[0][6] = '0';
 		break;
 		//add back to menu
 	}
@@ -413,14 +431,26 @@ reduce_life(){
 }
 
 void kill_chack(){
-	if(display_background_color[chack->position.y][chack->position.x] == GRANADE_SMOKE_COLOR || display_background_color[chack->position.y][chack->position.x+1] == GRANADE_SMOKE_COLOR || display_background_color[chack->position.y][chack->position.x-1] == GRANADE_SMOKE_COLOR){				//kill chack
+	if((display_background_color[chack->position.y][chack->position.x] == GRANADE_SMOKE_COLOR || display_background_color[chack->position.y][chack->position.x+1] == GRANADE_SMOKE_COLOR || display_background_color[chack->position.y][chack->position.x-1] == GRANADE_SMOKE_COLOR || kill_monster==1)  && chack_alive==1){				//kill chack
+				chack_alive=0;
+				display_background[chack->position.y][chack->position.x]= ' ';
+				display_background[chack->position.y][chack->position.x-1]= ' ';
+				display_background[chack->position.y][chack->position.x+1]= ' ';
+				kill_monster=0;					//cant be killed again by monster
 				display_background[3][4]= '^';//draw new chack
 				display_background[3][3]= '(';
 				display_background[3][5]= ')';
 				chack->position.y=3;	//save new cords
 				chack->position.x=4;
 				reduce_life();
-				if(chack->life ==0){
+				send(dispid,1);
+				if(chack->life ==0){ //ggwp
+					new_stage = 1;
+					kill_world=1;		//ggwp
+					write_string( 12,25,100,"GAME OVER RESTART AND TRY AGAIN" );
+					
+					send(dispid,1);		// do it for me imidiatly
+
 					//gameover
 				}
 	//REDUCE LIFE+ CHECK IF GAME OVER
@@ -455,16 +485,6 @@ void moveChack(char side)
 			chack->position.x = (chack->position.x+1)%80;
 			drawChack();
 		}
-		else if (display_background_color[chack->position.y-1][(chack->position.x-1)] == FINNISH_GATE){
-			// chack hits a finnish gate
-			//killer();
-			new_stage=1;
-			current_stage = current_stage++;
-			if (current_stage >= 3){	// game has finnished.
-				current_stage = 0;
-			}
-			//send(stage_manager_pid,current_stage);
-		} 
 
 		break;
 		case 'L'://move left
@@ -487,29 +507,11 @@ void moveChack(char side)
 			chack->position.x = (chack->position.x-1)%80;
 			drawChack();
 		}
-		else if (display_background_color[chack->position.y-1][(chack->position.x-1)] == FINNISH_GATE){
-			// chack hits a finnish gate
-			current_stage = current_stage++;
-			new_stage=1;
-			if (current_stage >= 3){	// game has finnished.
-				current_stage = 0;
-			}
-		//	send(stage_manager_pid,current_stage);
-		} 
 		break;
 		case 'U'://move up
 		jumpCounter =0;
 		while((display_background_color[chack->position.y-1][(chack->position.x)] != WALL_COLOR) && (jumpCounter<3))
-		{	
-			if (display_background_color[chack->position.y-1][(chack->position.x-1)] == FINNISH_GATE){
-				// chack hits a finnish gate
-				current_stage = current_stage++;
-				new_stage=1;
-				if (current_stage >= 3){	// game has finnished.
-					current_stage = 0;
-				}
-				//send(stage_manager_pid,current_stage);
-			}	
+		{
 			display_background[chack->position.y][chack->position.x]= ' ';
 			display_background[chack->position.y][chack->position.x-1]= ' ';
 			display_background[chack->position.y][chack->position.x+1]= ' ';
@@ -557,10 +559,12 @@ void moveChack(char side)
 		drawChack();
 		sleept(100);
 	}
+	chack_alive=1; //cant die if im not alive
+
 	kill_chack();
-	if (chack->position.y==23 && chack->position.x==79 ){
-		new_stage=1;
-		current_stage++;
+	if (chack->position.y==23 && chack->position.x==79 ){		//check if stage is over
+		new_stage=1;											//kill monsters and chickens
+		current_stage++;										//advance to the next stage
 		send(stage_manager_pid, current_stage);
 	}
 	drawChack();
@@ -705,6 +709,11 @@ void moveMonster( MONSTER *monster)
 		case 'R'://move  right
 		if((display_background_color[monster->position.y][(monster->position.x+2)] != WALL_COLOR))
 		{
+			if(monster->position.x==chack->position.x && monster->position.y==chack->position.y){
+				kill_monster=1;
+				kill_chack();
+				
+			}
 			monster->oldAttribute[0] = monster->oldAttribute[1];
 			monster->oldAttribute[1] = monster->oldAttribute[2];
 			monster->oldAttribute[2] = display_background_color[monster->position.y][monster->position.x + 2];
@@ -734,6 +743,11 @@ void moveMonster( MONSTER *monster)
 		case 'L'://move left
 		if((display_background_color[monster->position.y][(monster->position.x-2)] != WALL_COLOR))
 		{
+			if(monster->position.x==chack->position.x && monster->position.y==chack->position.y){
+				kill_monster=1;
+				kill_chack();
+				
+			}
 			monster->oldAttribute[0] = display_background_color[monster->position.y][monster->position.x - 2];
 			monster->oldAttribute[1] = monster->oldAttribute[0];
 			monster->oldAttribute[2] = monster->oldAttribute[1];
@@ -762,6 +776,11 @@ void moveMonster( MONSTER *monster)
 		case 'U'://move up
 		if((display_background_color[monster->position.y-1][(monster->position.x)] != WALL_COLOR))
 		{
+			if(monster->position.x==chack->position.x && monster->position.y==chack->position.y){
+				kill_monster=1;
+				kill_chack();
+				
+			}
 			monster->oldAttribute[0] =EMPTY_SPACE;
 			monster->oldAttribute[1] = EMPTY_SPACE;
 			monster->oldAttribute[2] = EMPTY_SPACE;
@@ -789,6 +808,11 @@ void moveMonster( MONSTER *monster)
 		case 'D'://move down
 			if((display_background_color[monster->position.y+1][(monster->position.x)] != WALL_COLOR))
 		{
+			if(monster->position.x==chack->position.x && monster->position.y==chack->position.y){
+				kill_monster=1;
+				kill_chack();
+				
+			}
 			monster->oldAttribute[0] = EMPTY_SPACE;
 			monster->oldAttribute[1] = EMPTY_SPACE;
 			monster->oldAttribute[2] = EMPTY_SPACE;
@@ -877,6 +901,10 @@ void lay_egg(int init_egg_laying_position_y, int init_egg_laying_position_x){
 
 	while (1){
 		if (abs(tod - speed_tod) >= 1000){
+		if(kill_world==1){						//kill eggs
+			display_background[temp_y][temp_x] = ' ';
+			break;
+		}
 			
 		//display_background[init_egg_laying_position_y][init_egg_laying_position_x] = '*';
 
@@ -894,6 +922,10 @@ void lay_egg(int init_egg_laying_position_y, int init_egg_laying_position_x){
 	}
 	// fall until egg hit breen ground.
 	while(display_background_color[temp_y+1][temp_x] != 40){
+		if(kill_world==1){										//kill eggs
+			display_background[temp_y][temp_x] = ' ';
+			break;
+		}
 		display_background[temp_y][temp_x] = ' ';
 		temp_y ++;
 		display_background[temp_y][temp_x] = '*';
@@ -1077,9 +1109,12 @@ void draw_chicken(CHICKEN *chicken_input){
 			display_background[19][10] = 'B';
 			display_background_color[19][10] = HEARTCOLLOR;
 	
-			display_background[0][1] = '1';
-			display_background[0][2] = '2';
-			display_background[0][3] = '3';
+			display_background[0][1] = 'L';
+			display_background[0][2] = 'I';
+			display_background[0][3] = 'F';
+			display_background[0][4] = 'E';
+			display_background[0][5] = ':';
+			display_background[0][6] = '3';
 			
 			
 			drawChack();
@@ -1226,9 +1261,12 @@ void draw_chicken(CHICKEN *chicken_input){
 			display_background[21][10] = 'B';
 			display_background_color[21][10] = HEARTCOLLOR;
 			
-			display_background[0][1] = '1';
-			display_background[0][2] = '2';
-			display_background[0][3] = '3';
+			display_background[0][1] = 'L';
+			display_background[0][2] = 'I';
+			display_background[0][3] = 'F';
+			display_background[0][4] = 'E';
+			display_background[0][5] = ':';
+			display_background[0][6] = '3';
 			
 			drawChack();
 		}
@@ -1373,9 +1411,12 @@ void draw_chicken(CHICKEN *chicken_input){
 			display_background[21][10] = 'B';
 			display_background_color[21][10] = HEARTCOLLOR;
 			
-			display_background[0][1] = '1';
-			display_background[0][2] = '2';
-			display_background[0][3] = '3';
+			display_background[0][1] = 'L';
+			display_background[0][2] = 'I';
+			display_background[0][3] = 'F';
+			display_background[0][4] = 'E';
+			display_background[0][5] = ':';
+			display_background[0][6] = '3';
 			
 			drawChack();
 		}
@@ -1605,6 +1646,8 @@ void updateter()
 	{
 		pressed = receive();
 		scan = pressed;
+		if (kill_world ==1)	//kill the level gg
+			kill(getpid());
 		if ((scan == 30)) // 'A' pressed
 			moveChack('L');
 		else if ((scan == 32)) // 'D' pressed
