@@ -12,6 +12,11 @@
 extern SYSCALL  sleept(int);
 extern SYSCALL	resched();
 extern struct intmap far *sys_imp;
+
+/*------------------------------------------------------------------------
+ *  Game parameters.
+ *------------------------------------------------------------------------
+ */
 #define WALL_COLOR 40
 #define EMPTY_SPACE 120
 #define NUMOFLIFES 3
@@ -20,16 +25,14 @@ extern struct intmap far *sys_imp;
 #define MAX_MONSTERS 10
 #define MAX_ENEMIES 15
 
+#define GRANADE_SMOKE_COLOR 70
 
 
 
-/*------------------------------------------------------------------------
- *  new0x70isr  --  for controlling tiiming of the game.
- *------------------------------------------------------------------------
- */
  volatile int global_flag;
  volatile int global_timer =0 ;
-void interrupt (*old0x70isr)(void);
+ void interrupt (*old0x70isr)(void);
+
 
 void setLatch(int latch)
 {
@@ -47,6 +50,11 @@ void setLatch(int latch)
 	}
 }
 
+
+/*------------------------------------------------------------------------
+ *  new0x70isr  --  for controlling tiiming of the game.
+ *------------------------------------------------------------------------
+ */
 void interrupt new0x70isr(void)
 {
   global_flag = 1;
@@ -73,21 +81,15 @@ void interrupt new0x70isr(void)
    POP AX
 
   } // asm */
-
-
 } // new0x70isr
 
-
-
-/*------------------------------------------------------------------------
- *  xmain  --  example of 2 processes executing the same code concurrently
- *------------------------------------------------------------------------
- */
 
 int displayer_sem = 1; 
 int receiver_pid;
 int (*old9newisr)(int);
  int uppid, dispid, recvpid, stage_1_pid;
+
+
 INTPROC new_int9(int mdevno)
 {
 char result;
@@ -130,12 +132,8 @@ asm {
 	///
 	send(uppid,scan);
 	////
-    
-	   
-     
-	   
+  
  // old9newisr(mdevno);
-
 return 0;
 }
 
@@ -213,7 +211,6 @@ typedef struct monster
 
 
 
-MONSTER monsters[MAX_MONSTERS];
 char display[2001];			//char
 char display_color[2001];	//Color
 char display_background [25][80]; //level design
@@ -227,13 +224,17 @@ int point_in_cycle;
 int gcycle_length;
 int gno_of_pids;
 
-/*------------------------------------------------------------------------
- *  New Stuff	New Stuff	New Stuff	New Stuff	New Stuff
- *------------------------------------------------------------------------
- */
+
+
 POSITION *chackPosition;
 CHACK *chack;
+MONSTER monsters[MAX_MONSTERS];	// Array of monsters, for controlling theirs PID's
 
+
+/*------------------------------------------------------------------------
+ * Set screen to text mode.
+ *------------------------------------------------------------------------
+ */
 void SetScreen ()
 {
 	asm{
@@ -244,6 +245,7 @@ void SetScreen ()
 		POP AX
 	}
 } // SetScreen
+
 
 void drawInPosL(int pos,char letter,char att) //draw on screen
 {
@@ -263,6 +265,7 @@ void drawInPosL(int pos,char letter,char att) //draw on screen
 		POP AX
 	}
 }
+
 
 /*------------------------------------------------------------------------
  *  Chuck section
@@ -377,40 +380,42 @@ void moveChack(char side)
 		drawChack();
 		sleept(1);
 	}
-	
 	drawChack();
 }
+
 
 /*------------------------------------------------------------------------
  *  Grenede section
  *------------------------------------------------------------------------
  */
-
 void throw_granade(int direction){
-	/* Function for drawing granades.
+	/* Function for drawing throwen granades.
 		
 	parameter: direction - 1 throw left, 0 throw right.
 	*/
 
-	int flying_time = 10	;	// Fly 3 seconds
-	//int fall_tod = tod;
-	//int flying_speed = 500;
+	// Fly 1 seconds, remember that latch suppose to be set to work at 1000hz, 
+	// so flying time will be reduced once every 100 ms, hance a second
+	int flying_time = 10;	
 	int flying_tod = tod;
+	int granade_explode_timer = tod; // sleep 3 sec before exploding;
 	int temp_x = chack->position.x;
 	int temp_y = chack->position.y;
+
+	int y;
+	int x;
 	
 
 	while (1){
-		if (abs(tod - flying_tod) >= 100){
+		if (abs(tod - flying_tod) >= 100){	// print to tscreen granade every 0.1 sec
 			
 			display_background[temp_y][temp_x] = ' ';
-			//temp_y ++;									// update falling position.
-			if( direction == 1){
+			if( direction == 1){// move granade left
 				temp_x--;
 				display_background[temp_y][temp_x] = '-';
 				display_background[temp_y][temp_x-1] = '<';
 			}
-			else {
+			else {// move granade right.
 				temp_x++;
 				display_background[temp_y][temp_x] = '-';
 				display_background[temp_y][temp_x+1] = '>';
@@ -426,7 +431,7 @@ void throw_granade(int direction){
 		}
 	}
 
-	// fall until egg hit breen ground.
+	// fall until granade hit breen ground.
 	while(display_background_color[temp_y+1][temp_x] != 40){
 		display_background[temp_y][temp_x-1] = ' ';
 		display_background[temp_y][temp_x+1] = ' ';
@@ -437,8 +442,36 @@ void throw_granade(int direction){
 	display_background[temp_y][temp_x+1] = '>';
 	display_background[temp_y][temp_x-1] = '<';
 
-	// TODO: add wait timer befor grenade explodes.
-	// TODO: make throw_granade a process.
+
+	// Ugly buisy/wait loop.
+	while (abs(tod - granade_explode_timer) <= 3000){
+	}
+
+	for (y = 0; y <= 1; y++){
+		for(x = -1; x <= 1; x++){
+			display_background_color[temp_y - y][temp_x + x]= GRANADE_SMOKE_COLOR;
+		}
+	}
+
+	display_background_color[temp_y][temp_x - 2]= GRANADE_SMOKE_COLOR;
+	display_background_color[temp_y][temp_x + 2]= GRANADE_SMOKE_COLOR;
+	display_background[temp_y][temp_x]= ' ';
+	display_background[temp_y][temp_x+1] = ' ';
+	display_background[temp_y][temp_x-1] = ' ';
+
+	// Reset granade_explode_timer timer;
+	granade_explode_timer = tod;
+	while (abs(tod - granade_explode_timer) <= 3000){
+	}
+
+	// Clear granade's smoke.
+	for (y = 0; y <= 1; y++){
+		for(x = -1; x <= 1; x++){
+			display_background_color[temp_y - y][temp_x + x]= EMPTY_SPACE;
+		}
+	}
+	display_background_color[temp_y][temp_x - 2]= EMPTY_SPACE;
+	display_background_color[temp_y][temp_x + 2]= EMPTY_SPACE;
 }
 
 
@@ -848,11 +881,11 @@ void updateter()
 
 		else if (scan == 18)	// 'E' pressed
 		{
-			throw_granade(0);	// Throw granade right.
+			resume( create(throw_granade, INITSTK, INITPRIO, "Granade", 1,0) ); // Throw granade right.
 		}
 		else if (scan == 16)	// 'Q' pressed
 		{
-			throw_granade(1);	// Throw granade left.
+			resume( create(throw_granade, INITSTK, INITPRIO, "Granade", 1,1) ); // Throw granade left.
 		}
 	}
 } // updater 
