@@ -419,6 +419,21 @@ void drawChack()
 	send(dispid,1);
 }
 
+void kill_chack(){
+	if(display_background_color[chack->position.y][chack->position.x] == GRANADE_SMOKE_COLOR || display_background_color[chack->position.y][chack->position.x+1] == GRANADE_SMOKE_COLOR || display_background_color[chack->position.y][chack->position.x-1] == GRANADE_SMOKE_COLOR){				//kill chack
+				display_background[3][4]= '^';//draw new chack
+				display_background[3][3]= '(';
+				display_background[3][5]= ')';
+				chack->position.y=3;	//save new cords
+				chack->position.x=4;
+				chack->life--;
+				if(chack->life ==0){
+					//gameover
+				}
+	//REDUCE LIFE+ CHECK IF GAME OVER
+	}
+}
+
 void moveChack(char side)
 {
 	int jumpCounter=0;
@@ -546,6 +561,7 @@ void moveChack(char side)
 		drawChack();
 		sleept(100);
 	}
+	kill_chack();
 	drawChack();
 }
 
@@ -819,6 +835,10 @@ void drawMonster(MONSTER *monster)
 	display_background_color[monster->oldPosition.y][monster->oldPosition.x+1]= monster->oldAttribute[2];
 	*/
 	
+	// kill a monster 
+	if (display_background_color[monster->position.y][monster->position.x]== GRANADE_SMOKE_COLOR || display_background[monster->position.y][monster->position.x-1]== GRANADE_SMOKE_COLOR || display_background[monster->position.y][monster->position.x+1]== GRANADE_SMOKE_COLOR){
+			kill(getpid());
+		}
 	display_background[monster->position.y][monster->position.x-1]= '<';
 	display_background[monster->position.y][monster->position.x]= '=';
 	display_background[monster->position.y][monster->position.x+1]= 'D';
@@ -1046,6 +1066,10 @@ void draw_chicken(CHICKEN *chicken_input){
 			display_background[19][10] = 'B';
 			display_background_color[19][10] = HEARTCOLLOR;
 	
+			display_background[0][1] = '1';
+			display_background[0][2] = '2';
+			display_background[0][3] = '3';
+			
 			
 			drawChack();
 		}
