@@ -13,12 +13,14 @@ extern SYSCALL  sleept(int);
 extern SYSCALL	resched();
 extern struct intmap far *sys_imp;
 
+
 /*------------------------------------------------------------------------
  *  Game parameters.
  *------------------------------------------------------------------------
  */
 #define WALL_COLOR 40
 #define EMPTY_SPACE 120
+#define FINNISH_GATE 155
 #define NUMOFLIFES 3
 #define HEARTCOLLOR 65
 #define MONSTER_COLOR 0x30
@@ -185,10 +187,10 @@ char randDirection(){
  */
 typedef struct chack
 {
-	char *name;	// user can set Chack's name in MENU scren.
+	char *name;		// user can set Chack's name in MENU scren.
 	int score;
-	int life;	// Life must be above 0, initiates with  NUMOFLIFES
-	int gravity; // 0 means standing on floor, 1 means standing on floor
+	int life;		// Life must be above 0, initiates with  NUMOFLIFES
+	int gravity;	// 0 means standing on floor, 1 means standing on floor
 	POSITION position;
 } CHACK;
 
@@ -200,8 +202,8 @@ typedef struct chicken
 
 typedef struct monster
 {
-	int alive;	// alive is a boolean flag, it is set to true when moster is born out of egg, and set to FALSE when monster entered to granade smoke.
-	char direction;//the direction of the monster(U,D,R,L)
+	int alive;			// alive is a boolean flag, it is set to true when moster is born out of egg, and set to FALSE when monster entered to granade smoke.
+	char direction;		//the direction of the monster(U,D,R,L)
 	POSITION position;
 	POSITION oldPosition;
 	char oldAttribute[3];
@@ -388,6 +390,25 @@ void moveChack(char side)
  *  Grenede section
  *------------------------------------------------------------------------
  */
+ void free_heart(int y, int temp_y, int x, int temp_x){
+	/*Funstion for animating frying hert.
+
+	if a heart id has been freed, than it should go up to the ceiling and make a new gate.
+	*/
+	int hole_width = 5;
+	int temp;
+
+	for ( ; temp_y >= 0; temp_y--){
+			if (display_background_color[temp_y][temp_x] != WALL_COLOR){
+				display_background_color[temp_y - y][temp_x + x]= EMPTY_SPACE - 30;
+			}
+	}
+	for (temp =0 ; temp <= hole_width; temp++){
+		display_background_color[0][temp_x + temp]= FINNISH_GATE;	
+	}
+ }
+
+
 void throw_granade(int direction){
 	/* Function for drawing throwen granades.
 		
@@ -449,10 +470,16 @@ void throw_granade(int direction){
 
 	for (y = 0; y <= 1; y++){
 		for(x = -1; x <= 1; x++){
+			if (display_background_color[temp_y - y][temp_x + x] == HEARTCOLLOR){
+				free_heart(y, temp_y, x, temp_x);
+			}
 			display_background_color[temp_y - y][temp_x + x]= GRANADE_SMOKE_COLOR;
+
 		}
 	}
-
+	if (display_background_color[temp_y][temp_x - 2] == HEARTCOLLOR || display_background_color[temp_y][temp_x + 2] == HEARTCOLLOR){
+				free_heart(y, temp_y, x, temp_x);
+	}
 	display_background_color[temp_y][temp_x - 2]= GRANADE_SMOKE_COLOR;
 	display_background_color[temp_y][temp_x + 2]= GRANADE_SMOKE_COLOR;
 	display_background[temp_y][temp_x]= ' ';
