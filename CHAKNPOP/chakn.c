@@ -1221,6 +1221,49 @@ void stage_3_platform2(){
 	
 	  
  }
+void stage_2(){
+	// create a chicken.
+	CHICKEN *chicken;
+	POSITION *chickenPosition;
+	int chicken_pid;
+	MONSTER *m;
+	POSITION *monsterPosition;
+	
+	print_stage_2();	// print stage on the screen
+	 
+	 // initiate chicken.
+	chickenPosition=(POSITION *)malloc(sizeof(POSITION));
+	chickenPosition->x=7;
+	chickenPosition->y=2;
+	chicken->position=*chickenPosition;
+	chicken->level = 1;
+
+	resume( chicken_pid = create(draw_chicken, INITSTK, INITPRIO, "CHICKEN_DRAWER", 1, chicken) );
+	
+	  
+ }
+void stage_3(){
+	// create a chicken.
+	CHICKEN *chicken;
+	POSITION *chickenPosition;
+	int chicken_pid;
+	MONSTER *m;
+	POSITION *monsterPosition;
+	
+	print_stage_3();	// print stage on the screen
+	 
+	 // initiate chicken.
+	chickenPosition=(POSITION *)malloc(sizeof(POSITION));
+	chickenPosition->x=7;
+	chickenPosition->y=2;
+	chicken->position=*chickenPosition;
+	chicken->level = 1;
+
+	resume( chicken_pid = create(draw_chicken, INITSTK, INITPRIO, "CHICKEN_DRAWER", 1, chicken) );
+	
+	  
+ }
+
 
  /*------------------------------------------------------------------------
  *  stage_0 MENU  --  print stage 1 hard_coded
@@ -1486,7 +1529,7 @@ xmain()
     resume( recvpid = create(receiver, INITSTK, INITPRIO+3, "RECIVEVER", 0) );
 	resume( uppid = create(updateter, INITSTK, INITPRIO, "UPDATER", 0) );
 	
-	resume( stage_3_pid = create(print_stage_3, INITSTK, INITPRIO, "STAGE1", 0) );
+	resume( stage_3_pid = create(stage_3, INITSTK, INITPRIO, "STAGE3", 0) );
 	//resume( stage_0_pid = create(stage_0, INITSTK, INITPRIO, "MENU", 0) );
     
 	receiver_pid =recvpid;  
