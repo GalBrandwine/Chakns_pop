@@ -14,6 +14,9 @@
   /*------------------------------------------------
   ChangeSpeaker - Turn speaker on or off. */
 
+
+
+  int new_stage =0;
 void ChangeSpeaker(int status)
 {
 	int portval;
@@ -287,32 +290,6 @@ char randDirection(){
 	}
  }
 
-void killer(){
-	/* Kill curent stage, chicken, and all monsters. */
-	int temp;
-
-	for(temp=0; temp <= eggs_layed; temp++){	// kiil all monsters.
-		kill(max_enemies[temp]);	
-	}
-	
-	kill(chicken_pid);
-
-	switch(current_stage){		// kill stage's
-		case 1:
-			kill(stage_1_pid);
-			break;
-		case 2:
-			Kill(stage_2_pid);
-			break;
-		case 3:
-			kill(stage_3_pid);
-			kill(platform_3_pid);
-			kill( platform_3_pid1);
-			break;
-	}
-}
-
-
 
 /*------------------------------------------------------------------------
  * Print to screen:
@@ -419,6 +396,22 @@ void drawChack()
 	send(dispid,1);
 }
 
+reduce_life(){
+	switch (chack->life){
+		case 3: 
+		display_background[0][3] = ' ';
+		break;
+		case 2:
+		display_background[0][2] = ' ';
+		break;
+		case 1:
+		display_background[0][1] = ' ';
+		break;
+		//add back to menu
+	}
+	chack->life--;
+}
+
 void kill_chack(){
 	if(display_background_color[chack->position.y][chack->position.x] == GRANADE_SMOKE_COLOR || display_background_color[chack->position.y][chack->position.x+1] == GRANADE_SMOKE_COLOR || display_background_color[chack->position.y][chack->position.x-1] == GRANADE_SMOKE_COLOR){				//kill chack
 				display_background[3][4]= '^';//draw new chack
@@ -426,7 +419,7 @@ void kill_chack(){
 				display_background[3][5]= ')';
 				chack->position.y=3;	//save new cords
 				chack->position.x=4;
-				chack->life--;
+				reduce_life();
 				if(chack->life ==0){
 					//gameover
 				}
@@ -464,13 +457,14 @@ void moveChack(char side)
 		}
 		else if (display_background_color[chack->position.y-1][(chack->position.x-1)] == FINNISH_GATE){
 			// chack hits a finnish gate
-			killer();
+			//killer();
+			new_stage=1;
 			current_stage = current_stage++;
 			if (current_stage >= 3){	// game has finnished.
 				current_stage = 0;
 			}
-			send(stage_manager_pid,current_stage);
-		}
+			//send(stage_manager_pid,current_stage);
+		} 
 
 		break;
 		case 'L'://move left
@@ -496,11 +490,12 @@ void moveChack(char side)
 		else if (display_background_color[chack->position.y-1][(chack->position.x-1)] == FINNISH_GATE){
 			// chack hits a finnish gate
 			current_stage = current_stage++;
+			new_stage=1;
 			if (current_stage >= 3){	// game has finnished.
 				current_stage = 0;
 			}
-			send(stage_manager_pid,current_stage);
-		}
+		//	send(stage_manager_pid,current_stage);
+		} 
 		break;
 		case 'U'://move up
 		jumpCounter =0;
@@ -509,10 +504,11 @@ void moveChack(char side)
 			if (display_background_color[chack->position.y-1][(chack->position.x-1)] == FINNISH_GATE){
 				// chack hits a finnish gate
 				current_stage = current_stage++;
+				new_stage=1;
 				if (current_stage >= 3){	// game has finnished.
 					current_stage = 0;
 				}
-				send(stage_manager_pid,current_stage);
+				//send(stage_manager_pid,current_stage);
 			}	
 			display_background[chack->position.y][chack->position.x]= ' ';
 			display_background[chack->position.y][chack->position.x-1]= ' ';
@@ -562,6 +558,11 @@ void moveChack(char side)
 		sleept(100);
 	}
 	kill_chack();
+	if (chack->position.y==23 && chack->position.x==79 ){
+		new_stage=1;
+		current_stage++;
+		send(stage_manager_pid, current_stage);
+	}
 	drawChack();
 }
 
@@ -579,7 +580,7 @@ void moveChack(char side)
 
 	if(current_stage == 1){	// first stage cheat, i had to do so, because we cant't go upward in first stage.
 		for (temp =0 ; temp <= hole_width; temp++){
-			display_background_color[24-temp][79]= FINNISH_GATE;	
+			display_background_color[23-temp][79]= FINNISH_GATE;	
 		}
 	}
 	else{
@@ -839,6 +840,9 @@ void drawMonster(MONSTER *monster)
 	if (display_background_color[monster->position.y][monster->position.x]== GRANADE_SMOKE_COLOR || display_background[monster->position.y][monster->position.x-1]== GRANADE_SMOKE_COLOR || display_background[monster->position.y][monster->position.x+1]== GRANADE_SMOKE_COLOR){
 			kill(getpid());
 		}
+	if (new_stage==1){
+		kill(getpid());
+	}
 	display_background[monster->position.y][monster->position.x-1]= '<';
 	display_background[monster->position.y][monster->position.x]= '=';
 	display_background[monster->position.y][monster->position.x+1]= 'D';
@@ -994,6 +998,13 @@ void draw_chicken(CHICKEN *chicken_input){
 			lay_egg_flag = 1 ;
 		}
 		send(dispid,1);
+
+		if (new_stage==1 ){	//time to die chicken
+			display_background[chicken->position.y][chicken->position.x]= ' ';
+			display_background[chicken->position.y][chicken->position.x-1]= ' ';
+			display_background[chicken->position.y][chicken->position.x+1]= ' ';
+			kill(getpid());
+			}
 		
 	}
 }
@@ -1214,7 +1225,10 @@ void draw_chicken(CHICKEN *chicken_input){
 			
 			display_background[21][10] = 'B';
 			display_background_color[21][10] = HEARTCOLLOR;
-	
+			
+			display_background[0][1] = '1';
+			display_background[0][2] = '2';
+			display_background[0][3] = '3';
 			
 			drawChack();
 		}
@@ -1358,7 +1372,10 @@ void draw_chicken(CHICKEN *chicken_input){
 			
 			display_background[21][10] = 'B';
 			display_background_color[21][10] = HEARTCOLLOR;
-	
+			
+			display_background[0][1] = '1';
+			display_background[0][2] = '2';
+			display_background[0][3] = '3';
 			
 			drawChack();
 		}
@@ -1476,7 +1493,6 @@ void stage_0(){//menu stage
 	chickenPosition->y=2;
 	chicken->position=*chickenPosition;
 	chicken->level = 1;
-
 	resume( chicken_pid = create(draw_chicken, INITSTK, INITPRIO, "CHICKEN_DRAWER", 1, chicken) );
 	
 	  
@@ -1498,6 +1514,7 @@ void stage_2(){
 	chickenPosition->y=2;
 	chicken->position=*chickenPosition;
 	chicken->level = 1;
+	new_stage =0; //reset
 
 	resume( chicken_pid = create(draw_chicken, INITSTK, INITPRIO, "CHICKEN_DRAWER", 1, chicken) );
 	
