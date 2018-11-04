@@ -88,7 +88,6 @@ void grenade_sound() {
 	sleept(70);
 
 }
-
 extern SYSCALL  sleept(int);
 extern SYSCALL	resched();
 extern struct intmap far *sys_imp;
@@ -120,7 +119,7 @@ int current_stage = 0;
 int displayer_sem = 1; 
 int receiver_pid;
 int (*old9newisr)(int);
-int uppid, dispid, recvpid, stage_manager_pid, stage_0_pid, stage_1_pid, stage_2_pid, stage_3_pid, platform_3_pid, platform_3_pid1, sound_id ;
+int uppid, dispid, recvpid, stage_manager_pid, stage_0_pid, stage_1_pid, stage_2_pid, stage_3_pid, platform_3_pid, platform_3_pid1,sound_id ;
 volatile int global_flag;
 volatile int global_timer =0 ;
 
@@ -221,9 +220,9 @@ INTPROC new_int9(int mdevno)
 	else if (scan == 157)
 		ctrl_pressed  = 0;
 	else if ((scan == 46) && (ctrl_pressed == 1)) // Control-C?
-    {		
-		nosound();
+    {
 		// Part1: Initialize the display adapter
+		nosound();
 		setvect(0x70,old0x70isr);	// restore old x70 ISR.
 		asm{
 			MOV              AH, 0// Select function = 'Set mode'
@@ -362,6 +361,11 @@ typedef struct monster
 }MONSTER;
 
 
+
+
+
+
+
 POSITION *chackPosition;
 CHACK *chack;
 MONSTER monsters[MAX_MONSTERS];	// Array of monsters, for controlling theirs PID's
@@ -452,6 +456,7 @@ void moveChack(char side)
 			}
 			send(stage_manager_pid,current_stage);
 		}
+
 		break;
 		case 'L'://move left
 		if(display_background_color[chack->position.y][(chack->position.x-1)] != WALL_COLOR)//if its not green wall
@@ -710,7 +715,8 @@ void moveMonster( MONSTER *monster)
 		 }
 		break;
 		case 'L'://move left
-		if((display_background_color[monster->position.y][(monster->position.x-2)] != WALL_COLOR)){
+		if((display_background_color[monster->position.y][(monster->position.x-2)] != WALL_COLOR))
+		{
 			monster->oldAttribute[0] = display_background_color[monster->position.y][monster->position.x - 2];
 			monster->oldAttribute[1] = monster->oldAttribute[0];
 			monster->oldAttribute[2] = monster->oldAttribute[1];
@@ -737,7 +743,8 @@ void moveMonster( MONSTER *monster)
 		 }
 		break;
 		case 'U'://move up
-		if((display_background_color[monster->position.y-1][(monster->position.x)] != WALL_COLOR)){
+		if((display_background_color[monster->position.y-1][(monster->position.x)] != WALL_COLOR))
+		{
 			monster->oldAttribute[0] =EMPTY_SPACE;
 			monster->oldAttribute[1] = EMPTY_SPACE;
 			monster->oldAttribute[2] = EMPTY_SPACE;
@@ -763,53 +770,69 @@ void moveMonster( MONSTER *monster)
 		 }
 		break;
 		case 'D'://move down
-			if((display_background_color[monster->position.y+1][(monster->position.x)] != WALL_COLOR)){
-				monster->oldAttribute[0] = EMPTY_SPACE;
-				monster->oldAttribute[1] = EMPTY_SPACE;
-				monster->oldAttribute[2] = EMPTY_SPACE;
-				monster->oldChar[0] = ' ';
-				monster->oldChar[1] = ' ';
-				monster->oldChar[2] = ' ';
+			if((display_background_color[monster->position.y+1][(monster->position.x)] != WALL_COLOR))
+		{
+			monster->oldAttribute[0] = EMPTY_SPACE;
+			monster->oldAttribute[1] = EMPTY_SPACE;
+			monster->oldAttribute[2] = EMPTY_SPACE;
+			monster->oldChar[0] = ' ';
+			monster->oldChar[1] = ' ';
+			monster->oldChar[2] = ' ';
 
-				monster->oldPosition.y = monster->position.y;
-				monster->oldPosition.x = monster->position.x;
-				display_background[monster->oldPosition.y][monster->oldPosition.x - 1] = monster->oldChar[0];
-				display_background[monster->oldPosition.y][monster->oldPosition.x] = monster->oldChar[1];
-				display_background[monster->oldPosition.y][monster->oldPosition.x + 1] = monster->oldChar[2];
-				display_background_color[monster->oldPosition.y][monster->oldPosition.x - 1] = monster->oldAttribute[0];
-				display_background_color[monster->oldPosition.y][monster->oldPosition.x] = monster->oldAttribute[1];
-				display_background_color[monster->oldPosition.y][monster->oldPosition.x + 1] = monster->oldAttribute[2];
-				monster->position.y = (monster->position.y+1)%25;
+			monster->oldPosition.y = monster->position.y;
+			monster->oldPosition.x = monster->position.x;
+			display_background[monster->oldPosition.y][monster->oldPosition.x - 1] = monster->oldChar[0];
+			display_background[monster->oldPosition.y][monster->oldPosition.x] = monster->oldChar[1];
+			display_background[monster->oldPosition.y][monster->oldPosition.x + 1] = monster->oldChar[2];
+			display_background_color[monster->oldPosition.y][monster->oldPosition.x - 1] = monster->oldAttribute[0];
+			display_background_color[monster->oldPosition.y][monster->oldPosition.x] = monster->oldAttribute[1];
+			display_background_color[monster->oldPosition.y][monster->oldPosition.x + 1] = monster->oldAttribute[2];
+			monster->position.y = (monster->position.y+1)%25;
 			
-				sleept(50);
-			}
-			else{
-				monster->direction =randDirection();
-			}
-			break;
+			sleept(50);
+		}
+		else
+		 {
+			 monster->direction =randDirection();
+		 }
+		break;
 	}
 }
 
-
 void drawMonster(MONSTER *monster)
 {
+	
 	while(1)
 	{
 	
-		moveMonster(monster);
 	
-		display_background[monster->position.y][monster->position.x-1]= '<';
-		display_background[monster->position.y][monster->position.x]= '=';
-		display_background[monster->position.y][monster->position.x+1]= 'D';
-		display_background_color[monster->position.y][monster->position.x-1]= MONSTER_COLOR;
-		display_background_color[monster->position.y][monster->position.x]= MONSTER_COLOR;
-		display_background_color[monster->position.y][monster->position.x+1]= MONSTER_COLOR;
 	
-		send(dispid,1);
+	
+	moveMonster(monster);
 
-		sleept(25);
+	/*
+	display_background[monster->oldPosition.y][monster->oldPosition.x-1] = monster->oldChar[0];
+	display_background[monster->oldPosition.y][monster->oldPosition.x]= monster->oldChar[1];
+	display_background[monster->oldPosition.y][monster->oldPosition.x+1]= monster->oldChar[2];
+	display_background_color[monster->oldPosition.y][monster->oldPosition.x-1]= monster->oldAttribute[0];
+	display_background_color[monster->oldPosition.y][monster->oldPosition.x]= monster->oldAttribute[1];
+	display_background_color[monster->oldPosition.y][monster->oldPosition.x+1]= monster->oldAttribute[2];
+	*/
+	
+	display_background[monster->position.y][monster->position.x-1]= '<';
+	display_background[monster->position.y][monster->position.x]= '=';
+	display_background[monster->position.y][monster->position.x+1]= 'D';
+	display_background_color[monster->position.y][monster->position.x-1]= MONSTER_COLOR;
+	display_background_color[monster->position.y][monster->position.x]= MONSTER_COLOR;
+	display_background_color[monster->position.y][monster->position.x+1]= MONSTER_COLOR;
+	
+	send(dispid,1);
+
+	sleept(25);
 	
 	}
+	
+
 }
 
 void lay_egg(int init_egg_laying_position_y, int init_egg_laying_position_x){
@@ -825,10 +848,14 @@ void lay_egg(int init_egg_laying_position_y, int init_egg_laying_position_x){
 	int temp_x = init_egg_laying_position_x;
 	int temp_y = init_egg_laying_position_y;
 	MONSTER m;
+	
 	POSITION monsterPosition;
 
 	while (1){
 		if (abs(tod - speed_tod) >= 1000){
+			
+		//display_background[init_egg_laying_position_y][init_egg_laying_position_x] = '*';
+
 			display_background[temp_y][temp_x] = ' ';
 			temp_y ++;									// update falling position.
 			display_background[temp_y][temp_x] = '*';
@@ -847,6 +874,13 @@ void lay_egg(int init_egg_laying_position_y, int init_egg_laying_position_x){
 		temp_y ++;
 		display_background[temp_y][temp_x] = '*';
 	}
+	
+
+	// make egg a monster, and start mooving it my AVIV'S move_monster() func.
+	/*display_background[temp_y][temp_x-1] = '(';
+	display_background[temp_y][temp_x] = '*';
+	display_background[temp_y][temp_x+1] = ')';
+	*/
 	
 	
 	monsterPosition.x= temp_x;
@@ -892,20 +926,22 @@ void move_chicken(CHICKEN *chicken_input){ // move chicken by stage setup.
 
 void draw_chicken(CHICKEN *chicken_input){
 	CHICKEN *chicken = chicken_input;	// initiated chicken;
+	// TODO: make that array ina the size of (chicken->level)*3
+	int eggs_layed = chicken->level * 3;
 	int lay_egg_flag = 1;				// laying egg flag;
 	int stage_level = 250;				// lay egg every 2.5 sec
 	int init_egg_laying_position_y = chicken->position.y + 1  ;
 	int init_egg_laying_position_x = chicken->position.x  ;
+	int max_enemies[MAX_ENEMIES];
 	int fall_time;
 	int temp_tod = tod;
 	int egg_tod = tod;
 	int temp_eggs_layed = 0;
-	max_enemies[MAX_ENEMIES];
-	eggs_layed = chicken->level * 3;
 	temp_eggs_layed = eggs_layed;
 
 	while (1){
-		if (abs(tod - temp_tod) >= 100){	// game run at 1000hz -> if term is True, then a mili-second has passed.
+		//if (tod%1000 <= 10){	// game run at 1000hz -> if global_timer%1000 is 0, then a second has passed.
+		if (abs(tod - temp_tod) >= 100){	// game run at 1000hz -> if global_timer%1000 is 0, then a second has passed.
 			
 			display_background[chicken->position.y][chicken->position.x]= ' ';
 			display_background[chicken->position.y][chicken->position.x-1]= ' ';
@@ -918,9 +954,14 @@ void draw_chicken(CHICKEN *chicken_input){
 		}
 		
 		if (lay_egg_flag == 1 && abs(tod - egg_tod) >= 2500){	// every stage has its allowed num of monsters/eggs
+			// lay egg	
+
 			//lay_egg(chicken);
 			lay_egg_flag = 0;	// dissable before laying egg.
+			//init_egg_laying_position_y = malloc(sizeof(int));
 			init_egg_laying_position_y = chicken->position.y ;
+
+			//init_egg_laying_position_x = malloc(sizeof(int));
 			init_egg_laying_position_x = chicken->position.x ;
 			if(temp_eggs_layed > 0){	// dont lay more eggs than stage x allow.
 				display_background[init_egg_laying_position_y+1][init_egg_laying_position_x] = '*';
@@ -960,12 +1001,13 @@ void draw_chicken(CHICKEN *chicken_input){
 					display_background_color[i][j] = WALL_COLOR;
 				}
 				else if (i%4 == 0){		// print floors
+					
 					if (j < hole_size && edge_needed_left == 1 && edge_needed_right == 0){ // set flags for printing only left_hole
 						display_background_color[i][j] = EMPTY_SPACE;
 						
 					}
 
-					else if (j + hole_size > 80 && edge_needed_left == 0 && edge_needed_right == 1){ // set flags for printing right_hole
+					else if (j + hole_size > 80 && edge_needed_left == 0 && edge_needed_right == 1){ // set plags for printing right_hole
 						display_background_color[i][j] = EMPTY_SPACE;
 						
 					}
@@ -1360,65 +1402,6 @@ void stage_3_platform2(){
 	}
 
 
-  void stage_1(){
-	// create a chicken.
-	CHICKEN *chicken;
-	POSITION *chickenPosition;
-	MONSTER *m;
-	POSITION *monsterPosition;
-	
-	print_stage_1();	// print stage on the screen
-	 
-	 // initiate chicken.
-	chickenPosition=(POSITION *)malloc(sizeof(POSITION));
-	chickenPosition->x=7;
-	chickenPosition->y=2;
-	chicken->position=*chickenPosition;
-	chicken->level = 1;
-
-	resume( chicken_pid = create(draw_chicken, INITSTK, INITPRIO, "CHICKEN_DRAWER", 1, chicken) );
-	
-	  
- }
-void stage_2(){
-	// create a chicken.
-	CHICKEN *chicken;
-	POSITION *chickenPosition;
-	MONSTER *m;
-	POSITION *monsterPosition;
-	
-	print_stage_2();	// print stage on the screen
-	 
-	 // initiate chicken.
-	chickenPosition=(POSITION *)malloc(sizeof(POSITION));
-	chickenPosition->x=7;
-	chickenPosition->y=2;
-	chicken->position=*chickenPosition;
-	chicken->level = 2;
-
-	resume( chicken_pid = create(draw_chicken, INITSTK, INITPRIO, "CHICKEN_DRAWER", 1, chicken) );
-	
-	  
- }
-void stage_3(){
-	// create a chicken.
-	CHICKEN *chicken;
-	POSITION *chickenPosition;
-
-	MONSTER *m;
-	POSITION *monsterPosition;
-	
-	print_stage_3();	// print stage on the screen
-	 
-	 // initiate chicken.
-	chickenPosition=(POSITION *)malloc(sizeof(POSITION));
-	chickenPosition->x=7;
-	chickenPosition->y=2;
-	chicken->position=*chickenPosition;
-	chicken->level = 3;
-
-	resume( chicken_pid = create(draw_chicken, INITSTK, INITPRIO, "CHICKEN_DRAWER", 1, chicken) );	  
- }
 
 
 /*------------------------------------------------------------------------
@@ -1447,10 +1430,78 @@ void stage_3(){
 	send(dispid,1);
  }
 
-
-void stage_0(){
+void stage_0(){//menu stage
+	chack->position.x=2;
+	chack->position.y=2;
 	print_stage_0();	// print stage on the screen
 }
+  void stage_1(){
+	// create a chicken.
+	CHICKEN *chicken;
+	POSITION *chickenPosition;
+	int chicken_pid;
+	MONSTER *m;
+	POSITION *monsterPosition;
+	chack->position.x=2;
+	chack->position.y=2;
+	print_stage_1();	// print stage on the screen
+	 
+	 // initiate chicken.
+	chickenPosition=(POSITION *)malloc(sizeof(POSITION));
+	chickenPosition->x=7;
+	chickenPosition->y=2;
+	chicken->position=*chickenPosition;
+	chicken->level = 1;
+
+	resume( chicken_pid = create(draw_chicken, INITSTK, INITPRIO, "CHICKEN_DRAWER", 1, chicken) );
+	
+	  
+ }
+void stage_2(){
+	// create a chicken.
+	CHICKEN *chicken;
+	POSITION *chickenPosition;
+	int chicken_pid;
+	MONSTER *m;
+	POSITION *monsterPosition;
+	chack->position.x=2;
+	chack->position.y=2;
+	print_stage_2();	// print stage on the screen
+	 
+	 // initiate chicken.
+	chickenPosition=(POSITION *)malloc(sizeof(POSITION));
+	chickenPosition->x=7;
+	chickenPosition->y=2;
+	chicken->position=*chickenPosition;
+	chicken->level = 1;
+
+	resume( chicken_pid = create(draw_chicken, INITSTK, INITPRIO, "CHICKEN_DRAWER", 1, chicken) );
+	
+	  
+ }
+void stage_3(){
+	// create a chicken.
+	CHICKEN *chicken;
+	POSITION *chickenPosition;
+	int chicken_pid;
+	MONSTER *m;
+	POSITION *monsterPosition;
+	chack->position.x=2;
+	chack->position.y=2;
+	print_stage_3();	// print stage on the screen
+	 
+	 // initiate chicken.
+	chickenPosition=(POSITION *)malloc(sizeof(POSITION));
+	chickenPosition->x=7;
+	chickenPosition->y=2;
+	chicken->position=*chickenPosition;
+	chicken->level = 1;
+
+	resume( chicken_pid = create(draw_chicken, INITSTK, INITPRIO, "CHICKEN_DRAWER", 1, chicken) );
+	
+	  
+ }
+
 
 void stage_manager(){
  	int stage_number;
@@ -1537,35 +1588,118 @@ void updateter()
 		}
 	}
 } // updater 
+ #define a0          43388       //   27.5000 hz
+#define ais0        40953       //   29.1353 hz
+#define h0          38655       //   30.8677 hz
+#define c1          36485       //   32.7032 hz
+#define cis1        34437       //   34.6479 hz
+#define d1          32505       //   36.7081 hz
+#define dis1        30680       //   38.8909 hz
+#define e1          28958       //   41.2035 hz
+#define f1          27333       //   43.6536 hz
+#define fis1        25799       //   46.2493 hz
+#define g1          24351       //   48.9995 hz
+#define gis1        22984       //   51.9130 hz
+#define a1          21694       //   55.0000 hz
+#define ais1        20477       //   58.2705 hz
+#define h1          19327       //   61.7354 hz
+#define c2          18243       //   65.4064 hz
+#define cis2        17219       //   69.2957 hz
+#define d2          16252       //   73.4162 hz
+#define dis2        15340       //   77.7817 hz
+#define e2          14479       //   82.4069 hz
+#define f2          13666       //   87.3071 hz
+#define fis2        12899       //   92.4986 hz
+#define g2          12175       //   97.9989 hz
+#define gis2        11492       //  103.8260 hz
+#define a2          10847       //  110.0000 hz
+#define ais2        10238       //  116.5410 hz
+#define h2          9664        //  123.4710 hz
+#define c3          9121        //  130.8130 hz
+#define cis3        8609        //  138.5910 hz
+#define d3          8126        //  146.8320 hz
+#define dis3        7670        //  155.5630 hz
+#define e3          7240        //  164.8140 hz
+#define f3          6833        //  174.6140 hz
+#define fis3        6450        //  184.9970 hz
+#define g3          6088        //  195.9980 hz
+#define gis3        5746        //  207.6520 hz
+#define a3          5424        //  220.0000 hz
+#define ais3        5119        //  233.0820 hz
+#define h3          4832        //  246.9420 hz
+#define c4          4561        //  261.6260 hz
+#define cis4        4305        //  277.1830 hz
+#define d4          4063        //  293.6650 hz
+#define dis4        3835        //  311.1270 hz
+#define e4          3620        //  329.6280 hz
+#define f4          3417        //  349.2280 hz
+#define fis4        3225        //  369.9940 hz
+#define g4          3044        //  391.9950 hz
+#define gis4        2873        //  415.3050 hz
+#define a4          2712        //  440.0000 hz
+#define ais4        2560        //  466.1640 hz
+#define h4          2416        //  493.8830 hz
+#define c5          2280        //  523.2510 hz
+#define cis5        2152        //  554.3650 hz
+#define d5          2032        //  587.3300 hz
+#define dis5        1918        //  622.2540 hz
+#define e5          1810        //  659.2550 hz
+#define f5          1708        //  698.4560 hz
+#define fis5        1612        //  739.9890 hz
+#define g5          1522        //  783.9910 hz
+#define gis5        1437        //  830.6090 hz
+#define a5          1356        //  880.0000 hz
+#define ais5        1280        //  932.3280 hz
+#define h5          1208        //  987.7670 hz
+#define c6          1140        // 1046.5000 hz
+#define cis6        1076        // 1108.7300 hz
+#define d6          1016        // 1174.6600 hz
+#define dis6         959        // 1244.5100 hz
+#define e6           905        // 1318.5100 hz
+#define f6           854        // 1396.9100 hz
+#define fis6         806        // 1479.9800 hz
+#define g6           761        // 1567.9800 hz
+#define gis6         718        // 1661.2200 hz
+#define a6           678        // 1760.0000 hz
+#define ais6         640        // 1864.6600 hz
+#define h6           604        // 1975.5300 hz
+#define c7           570        // 2093.0000 hz
+#define cis7         538        // 2217.4600 hz
+#define d7           508        // 2349.3200 hz
+#define dis7         479        // 2489.0200 hz
+#define e7           452        // 2637.0200 hz
+#define f7           427        // 2793.8300 hz
+#define fis7         403        // 2959.9600 hz
+#define g7           380        // 3135.9600 hz
+#define gis7         359        // 3322.4400 hz
+#define a7           339        // 3520.0000 hz
+#define ais7         320        // 3729.3100 hz
+#define h7           302        // 3951.0700 hz
+#define c8           285        // 4186.0100 hz
 
+#define whole_note            1800
+#define half_note_dot         whole_note/2 + whole_note/4
+#define half_note             whole_note/2
+#define quarter_note_dot      whole_note/4 + whole_note/8
+#define quarter_note          whole_note/4
+#define eighth_note           whole_note/8
+#define pause                 30
 void sound()
 {
-	
-	while (1)
+	int i;
+	int chords[]={g3,quarter_note,c4,quarter_note_dot,h3,eighth_note,c4,quarter_note,e4,quarter_note,d4,quarter_note_dot,c4,eighth_note,d4,quarter_note,e4,eighth_note,d4,eighth_note,c4,quarter_note,c4,quarter_note,e4,quarter_note,g4,quarter_note,a4,half_note_dot,a4,quarter_note,g4,quarter_note_dot,e4,eighth_note,e4,quarter_note,c4,quarter_note,d4,quarter_note_dot,c4,eighth_note,d4,quarter_note,e4,eighth_note,d4,eighth_note,c4,quarter_note_dot,a3,eighth_note,a3,quarter_note,g3,quarter_note,c4,half_note_dot,a4,quarter_note,g4,quarter_note_dot,e4,eighth_note,e4,quarter_note,c4,quarter_note,d4,quarter_note_dot,c4,eighth_note,d4,quarter_note,a4,quarter_note,g4,quarter_note_dot,e4,eighth_note,e4,quarter_note,g4,quarter_note,a4,half_note_dot,a4,quarter_note,g4,quarter_note_dot,e4,eighth_note,e4,quarter_note,c4,quarter_note,d4,quarter_note_dot,c4,eighth_note,d4,quarter_note,e4,eighth_note,d4,eighth_note,c4,quarter_note_dot,a3,eighth_note,a3,quarter_note,g3,quarter_note,c4,half_note_dot};
+	//while (1)
 	{
-		Sound(800);
-		sleept(500);
-		Sound(700);
-		sleept(500);
-		Sound(650);
-		sleept(500);
-		Sound(600);
-		sleept(500);
-		Sound(400);
-		sleept(500);
-		Sound(500);
-		sleept(350);
-		Sound(600);
-		sleept(600);
-		Sound(500);
-		sleept(700);
-		Sound(400);
-		sleept(450);
-		Sound(300);
-		sleept(300);
-		Sound(400);
-		sleept(100);
-		
+		for(i=0;i<=110;i+=2)
+		{
+		Sound(chords[i]/40);
+		//sleept(400);
+		sleept(chords[i+1]);
+		}
+
+
+           
+
 		
 		/*good for something*/
 		//Sound(1100);
@@ -1648,7 +1782,6 @@ xmain()
     resume( recvpid = create(receiver, INITSTK, INITPRIO+3, "RECIVEVER", 0) );
 	resume( uppid = create(updateter, INITSTK, INITPRIO, "UPDATER", 0) );
 	
-	// Init stages, and stages_manager.
 	resume( stage_manager_pid = create(stage_manager, INITSTK, INITPRIO, "stage_manager", 0) );
 	stage_0_pid = create(stage_0, INITSTK, INITPRIO, "MENU", 0);
 	stage_1_pid = create(stage_1, INITSTK, INITPRIO, "STAGE1", 0);
