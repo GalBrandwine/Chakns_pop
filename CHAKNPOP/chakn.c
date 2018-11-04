@@ -217,7 +217,8 @@ INTPROC new_int9(int mdevno)
 	else if (scan == 157)
 		ctrl_pressed  = 0;
 	else if ((scan == 46) && (ctrl_pressed == 1)) // Control-C?
-    {
+    {		
+		nosound();
 		// Part1: Initialize the display adapter
 		setvect(0x70,old0x70isr);	// restore old x70 ISR.
 		asm{
