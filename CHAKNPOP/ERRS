@@ -28,14 +28,14 @@ Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1289: 'hole_flag' is assigned a valu
 Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1289: 'pos' is assigned a value that is never used in function print_stage_3
 Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1369: 'chicken_pid' is assigned a value that is never used in function stage_1
 Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1390: 'chicken_pid' is assigned a value that is never used in function stage_2
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1411: 'chicken_pid' is assigned a value that is never used in function stage_3
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1438: 'hole_flag' is assigned a value that is never used in function print_stage_0
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1438: 'pos' is assigned a value that is never used in function print_stage_0
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1578: Unreachable code in function sound
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1579: Void functions may not return a value in function sound
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1609: Function should return a value in function schedule
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1613: Nonportable pointer conversion in function xmain
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1644: Function should return a value in function xmain
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1409: 'chicken_pid' is assigned a value that is never used in function stage_3
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1436: 'hole_flag' is assigned a value that is never used in function print_stage_0
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1436: 'pos' is assigned a value that is never used in function print_stage_0
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1576: Unreachable code in function sound
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1577: Void functions may not return a value in function sound
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1607: Function should return a value in function schedule
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1611: Nonportable pointer conversion in function xmain
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1643: Function should return a value in function xmain
 Turbo Link  Version 5.0 Copyright (c) 1992 Borland International
 
 	Available memory 4072380
