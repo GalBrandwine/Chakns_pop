@@ -88,6 +88,7 @@ void grenade_sound() {
 	sleept(70);
 
 }
+
 extern SYSCALL  sleept(int);
 extern SYSCALL	resched();
 extern struct intmap far *sys_imp;
@@ -119,7 +120,7 @@ int current_stage = 0;
 int displayer_sem = 1; 
 int receiver_pid;
 int (*old9newisr)(int);
-int uppid, dispid, recvpid, stage_manager_pid, stage_0_pid, stage_1_pid, stage_2_pid, stage_3_pid, platform_3_pid, platform_3_pid1,sound_id ;
+int uppid, dispid, recvpid, stage_manager_pid, stage_0_pid, stage_1_pid, stage_2_pid, stage_3_pid, platform_3_pid, platform_3_pid1, sound_id ;
 volatile int global_flag;
 volatile int global_timer =0 ;
 
@@ -141,6 +142,9 @@ int point_in_cycle;
 int gcycle_length;
 int gno_of_pids;
 
+int chicken_pid;
+int eggs_layed;
+int max_enemies[MAX_ENEMIES];
 
 /*------------------------------------------------------------------------
  *  Latch  --  for changing game speed.
@@ -284,6 +288,30 @@ char randDirection(){
 	}
  }
 
+void killer(){
+	/* Kill curent stage, chicken, and all monsters. */
+	int temp;
+
+	for(temp=0; temp <= eggs_layed; temp++){	// kiil all monsters.
+		kill(max_enemies[temp]);	
+	}
+	
+	kill(chicken_pid);
+
+	switch(current_stage){		// kill stage's
+		case 1:
+			kill(stage_1_pid);
+			break;
+		case 2:
+			Kill(stage_2_pid);
+			break;
+		case 3:
+			kill(stage_3_pid);
+			kill(platform_3_pid);
+			kill( platform_3_pid1);
+			break;
+	}
+}
 
 
 
@@ -332,11 +360,6 @@ typedef struct monster
 	char oldChar[3];
 	
 }MONSTER;
-
-
-
-
-
 
 
 POSITION *chackPosition;
@@ -420,11 +443,15 @@ void moveChack(char side)
 			chack->position.x = (chack->position.x+1)%80;
 			drawChack();
 		}
-		else if (display_background_color[chack->position.y][(chack->position.x+1)] != FINNISH_GATE)// if hit exit door
-		{
-			// TODO: change stage, from current to the next stage, or menu if finnished.
+		else if (display_background_color[chack->position.y-1][(chack->position.x-1)] == FINNISH_GATE){
+			// chack hits a finnish gate
+			killer();
+			current_stage = current_stage++;
+			if (current_stage >= 3){	// game has finnished.
+				current_stage = 0;
+			}
+			send(stage_manager_pid,current_stage);
 		}
-
 		break;
 		case 'L'://move left
 		if(display_background_color[chack->position.y][(chack->position.x-1)] != WALL_COLOR)//if its not green wall
@@ -446,11 +473,27 @@ void moveChack(char side)
 			chack->position.x = (chack->position.x-1)%80;
 			drawChack();
 		}
+		else if (display_background_color[chack->position.y-1][(chack->position.x-1)] == FINNISH_GATE){
+			// chack hits a finnish gate
+			current_stage = current_stage++;
+			if (current_stage >= 3){	// game has finnished.
+				current_stage = 0;
+			}
+			send(stage_manager_pid,current_stage);
+		}
 		break;
 		case 'U'://move up
 		jumpCounter =0;
 		while((display_background_color[chack->position.y-1][(chack->position.x)] != WALL_COLOR) && (jumpCounter<3))
-		{
+		{	
+			if (display_background_color[chack->position.y-1][(chack->position.x-1)] == FINNISH_GATE){
+				// chack hits a finnish gate
+				current_stage = current_stage++;
+				if (current_stage >= 3){	// game has finnished.
+					current_stage = 0;
+				}
+				send(stage_manager_pid,current_stage);
+			}	
 			display_background[chack->position.y][chack->position.x]= ' ';
 			display_background[chack->position.y][chack->position.x-1]= ' ';
 			display_background[chack->position.y][chack->position.x+1]= ' ';
@@ -513,13 +556,20 @@ void moveChack(char side)
 	int hole_width = 5;
 	int temp;
 
-	for ( ; temp_y >= 0; temp_y--){
-			if (display_background_color[temp_y][temp_x] != WALL_COLOR){
-				display_background_color[temp_y - y][temp_x + x]= EMPTY_SPACE - 30;
-			}
+	if(current_stage == 1){	// first stage cheat, i had to do so, because we cant't go upward in first stage.
+		for (temp =0 ; temp <= hole_width; temp++){
+			display_background_color[24-temp][79]= FINNISH_GATE;	
+		}
 	}
-	for (temp =0 ; temp <= hole_width; temp++){
-		display_background_color[0][temp_x + temp]= FINNISH_GATE;	
+	else{
+		for ( ; temp_y >= 0; temp_y--){
+				if (display_background_color[temp_y][temp_x] != WALL_COLOR){
+					display_background_color[temp_y - y][temp_x + x]= EMPTY_SPACE - 30;
+				}
+		}
+		for (temp =0 ; temp <= hole_width; temp++){
+			display_background_color[0][temp_x + temp]= FINNISH_GATE;	
+		}
 	}
  }
 
@@ -842,16 +892,17 @@ void move_chicken(CHICKEN *chicken_input){ // move chicken by stage setup.
 
 void draw_chicken(CHICKEN *chicken_input){
 	CHICKEN *chicken = chicken_input;	// initiated chicken;
-	// TODO: make that array ina the size of (chicken->level)*3
-	int eggs_layed = chicken->level * 3;
 	int lay_egg_flag = 1;				// laying egg flag;
 	int stage_level = 250;				// lay egg every 2.5 sec
 	int init_egg_laying_position_y = chicken->position.y + 1  ;
 	int init_egg_laying_position_x = chicken->position.x  ;
-	int max_enemies[MAX_ENEMIES];
 	int fall_time;
 	int temp_tod = tod;
 	int egg_tod = tod;
+	int temp_eggs_layed = 0;
+	max_enemies[MAX_ENEMIES];
+	eggs_layed = chicken->level * 3;
+	temp_eggs_layed = eggs_layed;
 
 	while (1){
 		if (abs(tod - temp_tod) >= 100){	// game run at 1000hz -> if term is True, then a mili-second has passed.
@@ -871,9 +922,9 @@ void draw_chicken(CHICKEN *chicken_input){
 			lay_egg_flag = 0;	// dissable before laying egg.
 			init_egg_laying_position_y = chicken->position.y ;
 			init_egg_laying_position_x = chicken->position.x ;
-			if(eggs_layed > 0){	// dont lay more eggs than stage x allow.
+			if(temp_eggs_layed > 0){	// dont lay more eggs than stage x allow.
 				display_background[init_egg_laying_position_y+1][init_egg_laying_position_x] = '*';
-				resume( max_enemies[eggs_layed--] = create(lay_egg, INITSTK, INITPRIO, "layed_egg", 2, init_egg_laying_position_y,init_egg_laying_position_x) );
+				resume( max_enemies[temp_eggs_layed--] = create(lay_egg, INITSTK, INITPRIO, "layed_egg", 2, init_egg_laying_position_y,init_egg_laying_position_x) );
 			}
 			resched();
 			egg_tod = tod;
@@ -909,13 +960,12 @@ void draw_chicken(CHICKEN *chicken_input){
 					display_background_color[i][j] = WALL_COLOR;
 				}
 				else if (i%4 == 0){		// print floors
-					
 					if (j < hole_size && edge_needed_left == 1 && edge_needed_right == 0){ // set flags for printing only left_hole
 						display_background_color[i][j] = EMPTY_SPACE;
 						
 					}
 
-					else if (j + hole_size > 80 && edge_needed_left == 0 && edge_needed_right == 1){ // set plags for printing right_hole
+					else if (j + hole_size > 80 && edge_needed_left == 0 && edge_needed_right == 1){ // set flags for printing right_hole
 						display_background_color[i][j] = EMPTY_SPACE;
 						
 					}
@@ -1314,7 +1364,6 @@ void stage_3_platform2(){
 	// create a chicken.
 	CHICKEN *chicken;
 	POSITION *chickenPosition;
-	int chicken_pid;
 	MONSTER *m;
 	POSITION *monsterPosition;
 	
@@ -1335,7 +1384,6 @@ void stage_2(){
 	// create a chicken.
 	CHICKEN *chicken;
 	POSITION *chickenPosition;
-	int chicken_pid;
 	MONSTER *m;
 	POSITION *monsterPosition;
 	
@@ -1346,7 +1394,7 @@ void stage_2(){
 	chickenPosition->x=7;
 	chickenPosition->y=2;
 	chicken->position=*chickenPosition;
-	chicken->level = 1;
+	chicken->level = 2;
 
 	resume( chicken_pid = create(draw_chicken, INITSTK, INITPRIO, "CHICKEN_DRAWER", 1, chicken) );
 	
@@ -1356,7 +1404,7 @@ void stage_3(){
 	// create a chicken.
 	CHICKEN *chicken;
 	POSITION *chickenPosition;
-	int chicken_pid;
+
 	MONSTER *m;
 	POSITION *monsterPosition;
 	
@@ -1367,7 +1415,7 @@ void stage_3(){
 	chickenPosition->x=7;
 	chickenPosition->y=2;
 	chicken->position=*chickenPosition;
-	chicken->level = 1;
+	chicken->level = 3;
 
 	resume( chicken_pid = create(draw_chicken, INITSTK, INITPRIO, "CHICKEN_DRAWER", 1, chicken) );	  
  }
