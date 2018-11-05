@@ -9,19 +9,23 @@
 #include <butler.h>
 #include <sleep.h>
 
+
+/*------------------------------------------------------------------------
+*  Sound section.
+*------------------------------------------------------------------------
+*/
+
+ 
+//ChangeSpeaker - Turn speaker on or off. 
 #define ON (1)
 #define OFF (0)
-  /*------------------------------------------------
-  ChangeSpeaker - Turn speaker on or off. */
 
+int new_stage =0;					//kill button for monsters and chickens
+int chack_alive = 1;				//chack can die if its 1
+int kill_world=0;					//shutdown
+int kill_monster = 0;				//monster killed chak?
 
-
-  int new_stage =0;					//kill button for monsters and chickens
-  int chack_alive = 1;				//chack can die if its 1
-  int kill_world=0;					//shutdown
-  int kill_monster = 0;					//monster killed chak?
-void ChangeSpeaker(int status)
-{
+void ChangeSpeaker(int status){
 	int portval;
 	//   portval = inportb( 0x61 );
 
@@ -33,10 +37,10 @@ void ChangeSpeaker(int status)
 		POP AX
 	}
 
-		if (status == ON)
-			portval |= 0x03;
-		else
-			portval &= ~0x03;
+	if (status == ON)
+		portval |= 0x03;
+	else
+		portval &= ~0x03;
 	// outportb( 0x61, portval );
 	asm{
 		PUSH AX
@@ -44,8 +48,8 @@ void ChangeSpeaker(int status)
 		OUT 61h,AL
 		POP AX
 	} // asm
-
 } /*--ChangeSpeaker( )----------*/
+
 void Sound(int hertz)
 {
 	unsigned divisor = 1193180L / hertz;
@@ -87,6 +91,7 @@ void NoSound(void)
 {
 	ChangeSpeaker(OFF);
 } /*--NoSound( )------*/
+
 void grenade_sound() {
 	Sound(20);
 	sleept(600);
@@ -151,6 +156,7 @@ int chicken_pid;
 int eggs_layed;
 int max_enemies[MAX_ENEMIES];
 
+
 /*------------------------------------------------------------------------
  *  Latch  --  for changing game speed.
  *------------------------------------------------------------------------
@@ -203,8 +209,6 @@ void interrupt new0x70isr(void)
 
   } // asm */
 } // new0x70isr
-
-
 
 
 
@@ -341,11 +345,6 @@ typedef struct monster
 }MONSTER;
 
 
-
-
-
-
-
 POSITION *chackPosition;
 CHACK *chack;
 MONSTER monsters[MAX_MONSTERS];	// Array of monsters, for controlling theirs PID's
@@ -367,6 +366,10 @@ void SetScreen ()
 } // SetScreen
 
 
+/*------------------------------------------------------------------------
+ * Simple coordination drawer.
+ *------------------------------------------------------------------------
+ */
 void drawInPosL(int pos,char letter,char att) //draw on screen
 {
 	asm{
@@ -402,6 +405,7 @@ void drawChack()
 reduce_life(){
 	switch (chack->life){
 		case 3: 
+			//write_string(0,1,65,"LIFE:222");
 			display_background[0][1] = 'L';
 			display_background[0][2] = 'I';
 			display_background[0][3] = 'F';
@@ -607,7 +611,7 @@ void throw_granade(int direction){
 	*/
 
 	// Fly 1 seconds, remember that latch suppose to be set to work at 1000hz, 
-	// so flying time will be reduced once every 100 ms, hance a second
+	// so flying time will be reduced once every 100 ms 10 times, hance a second
 	int flying_time = 10;	
 	int flying_tod = tod;
 	int granade_explode_timer = tod; // sleep 3 sec before exploding;
@@ -622,7 +626,7 @@ void throw_granade(int direction){
 		if (abs(tod - flying_tod) >= 100){	// print to tscreen granade every 0.1 sec
 			
 			display_background[temp_y][temp_x] = ' ';
-			if( direction == 1){// move granade left
+			if( direction == 1 ){// move granade left
 				temp_x--;
 				display_background[temp_y][temp_x] = '-';
 				display_background[temp_y][temp_x-1] = '<';
@@ -633,7 +637,7 @@ void throw_granade(int direction){
 				display_background[temp_y][temp_x+1] = '>';
 			}
 
-
+			// Update flying time.
 			flying_time--;		
 			send(dispid,1);
 			flying_tod = tod;
@@ -678,7 +682,6 @@ void throw_granade(int direction){
 	display_background[temp_y][temp_x-1] = ' ';
 
 	// Reset granade_explode_timer timer;
-
 	granade_explode_timer = tod;
 	grenade_sound();
 	while (abs(tod - granade_explode_timer) <= 3000){
@@ -845,21 +848,7 @@ void drawMonster(MONSTER *monster)
 	
 	while(1)
 	{
-	
-	
-	
-	
 	moveMonster(monster);
-
-	/*
-	display_background[monster->oldPosition.y][monster->oldPosition.x-1] = monster->oldChar[0];
-	display_background[monster->oldPosition.y][monster->oldPosition.x]= monster->oldChar[1];
-	display_background[monster->oldPosition.y][monster->oldPosition.x+1]= monster->oldChar[2];
-	display_background_color[monster->oldPosition.y][monster->oldPosition.x-1]= monster->oldAttribute[0];
-	display_background_color[monster->oldPosition.y][monster->oldPosition.x]= monster->oldAttribute[1];
-	display_background_color[monster->oldPosition.y][monster->oldPosition.x+1]= monster->oldAttribute[2];
-	*/
-	
 	// kill a monster 
 	if (display_background_color[monster->position.y][monster->position.x]== GRANADE_SMOKE_COLOR || display_background[monster->position.y][monster->position.x-1]== GRANADE_SMOKE_COLOR || display_background[monster->position.y][monster->position.x+1]== GRANADE_SMOKE_COLOR){
 			kill(getpid());
@@ -875,12 +864,8 @@ void drawMonster(MONSTER *monster)
 	display_background_color[monster->position.y][monster->position.x+1]= MONSTER_COLOR;
 	
 	send(dispid,1);
-
 	sleept(25);
-	
 	}
-	
-
 }
 
 void lay_egg(int init_egg_laying_position_y, int init_egg_laying_position_x){
@@ -930,15 +915,7 @@ void lay_egg(int init_egg_laying_position_y, int init_egg_laying_position_x){
 		temp_y ++;
 		display_background[temp_y][temp_x] = '*';
 	}
-	
 
-	// make egg a monster, and start mooving it my AVIV'S move_monster() func.
-	/*display_background[temp_y][temp_x-1] = '(';
-	display_background[temp_y][temp_x] = '*';
-	display_background[temp_y][temp_x+1] = ')';
-	*/
-	
-	
 	monsterPosition.x= temp_x;
 	monsterPosition.y= temp_y;
 	
@@ -950,7 +927,6 @@ void lay_egg(int init_egg_laying_position_y, int init_egg_laying_position_x){
 	m.oldChar[0] = ' ';
 	m.oldChar[1] = ' ';
 	m.oldChar[2] = ' ';
-	//resume(create(drawMonster, INITSTK, INITPRIO, "drawMonster",1,m));
 	drawMonster(&m);
 }
 
@@ -1011,13 +987,8 @@ void draw_chicken(CHICKEN *chicken_input){
 		
 		if (lay_egg_flag == 1 && abs(tod - egg_tod) >= 2500){	// every stage has its allowed num of monsters/eggs
 			// lay egg	
-
-			//lay_egg(chicken);
 			lay_egg_flag = 0;	// dissable before laying egg.
-			//init_egg_laying_position_y = malloc(sizeof(int));
 			init_egg_laying_position_y = chicken->position.y ;
-
-			//init_egg_laying_position_x = malloc(sizeof(int));
 			init_egg_laying_position_x = chicken->position.x ;
 			if(temp_eggs_layed > 0){	// dont lay more eggs than stage x allow.
 				display_background[init_egg_laying_position_y+1][init_egg_laying_position_x] = '*';
@@ -1040,6 +1011,7 @@ void draw_chicken(CHICKEN *chicken_input){
 		
 	}
 }
+
 
  /*------------------------------------------------------------------------
  *  stage_1  --  print stage 1 hard_coded
@@ -1484,8 +1456,6 @@ void stage_3_platform2(){
 	}
 
 
-
-
 /*------------------------------------------------------------------------
 *  stage_0 MENU  --  print stage 0 hard_coded
 *------------------------------------------------------------------------
@@ -1580,9 +1550,7 @@ void stage_3(){
 	chicken->level = 1;
 
 	resume( chicken_pid = create(draw_chicken, INITSTK, INITPRIO, "CHICKEN_DRAWER", 1, chicken) );
-	
-	  
- }
+}
 
 
 void stage_manager(){
@@ -1607,8 +1575,8 @@ void stage_manager(){
 }
 
  
-void displayer( void )
-{	//This process display the matrix, receive message (and return to ready) with every change in the screen matrix
+void displayer( void ){	
+	//This process display the matrix, receive message (and return to ready) with every change in the screen matrix
 	int i,j,pos;
 	while (1)
          {
@@ -1624,6 +1592,7 @@ void displayer( void )
 			   signal(displayer_sem);
          } //while
 } // prntr
+
 
 void receiver()
 {
@@ -1672,7 +1641,13 @@ void updateter()
 		}
 	}
 } // updater 
- #define a0          43388       //   27.5000 hz
+
+
+/*------------------------------------------------------------------------
+*  Music notes.
+*------------------------------------------------------------------------
+*/
+#define a0          43388       //   27.5000 hz
 #define ais0        40953       //   29.1353 hz
 #define h0          38655       //   30.8677 hz
 #define c1          36485       //   32.7032 hz
@@ -1768,6 +1743,7 @@ void updateter()
 #define quarter_note          whole_note/4
 #define eighth_note           whole_note/8
 #define pause                 30
+
 void sound()
 {
 	int i;
@@ -1780,47 +1756,6 @@ void sound()
 		//sleept(400);
 		sleept(chords[i+1]);
 		}
-
-
-           
-
-		
-		/*good for something*/
-		//Sound(1100);
-		//sleept(50);
-		
-		/*
-		Sound(120);
-		sleept(500);
-		Sound(77);
-		sleept(500);
-		Sound(90);
-		sleept(500);
-		Sound(110);
-		sleept(500);
-		Sound(120);
-		sleept(500);
-		Sound(500);
-		sleept(500);
-		Sound(77);
-		sleept(800);
-		Sound(110);
-		sleept(500);
-		Sound(120);
-		sleept(800);
-		Sound(500);
-		sleept(500);
-		Sound(77);
-		sleept(800);
-		Sound(110);
-		sleept(500);
-		Sound(120);
-		sleept(500);
-		Sound(70);
-		sleept(500);
-		Sound(77);
-		sleept(800);
-		*/
 	}
 	NoSound();
 	return(0);
@@ -1855,6 +1790,7 @@ SYSCALL schedule(int no_of_pids, int cycle_length, int pid1, ...)
 
 } // schedule 
 
+
 xmain()
 {
 	char *test = strdup("chack_name");
@@ -1887,5 +1823,5 @@ xmain()
 	chack->life = NUMOFLIFES;
 	chack->gravity=1;
 		
-    schedule(7,57, dispid, 0,  uppid, 29, stage_manager_pid, 30, stage_0_pid, 32, stage_1_pid, 34, stage_2_pid, 36,stage_3_pid, 38);
+    schedule(7,57, dispid, 0,  uppid, 29, stage_manager_pid, 30, stage_0_pid, 32, stage_1_pid, 34, stage_2_pid, 36, stage_3_pid, 38);
 } // xmain	
