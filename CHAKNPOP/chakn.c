@@ -405,7 +405,7 @@ void drawChack()
 reduce_life(){
 	switch (chack->life){
 		case 3: 
-			//write_string(0,1,65,"LIFE:222");
+			//write_string(0,6,652,"LIFE:2");
 			display_background[0][1] = 'L';
 			display_background[0][2] = 'I';
 			display_background[0][3] = 'F';
@@ -580,8 +580,9 @@ void moveChack(char side)
  *------------------------------------------------------------------------
  */
  void free_heart(int y, int temp_y, int x, int temp_x){
-	/*Funstion for animating frying hert.
-	if a heart id has been freed, than it should go up to the ceiling and make a new gate.
+	/* Function for animating frying hert.
+	
+	if a heart_id has been freed, than it should go up to the ceiling and make a new gate.
 	*/
 	int hole_width = 5;
 	int temp;
@@ -593,11 +594,13 @@ void moveChack(char side)
 	}
 	else{
 		for ( ; temp_y >= 0; temp_y--){
+				// Painting the purpul collumn
 				if (display_background_color[temp_y][temp_x] != WALL_COLOR){
-					display_background_color[temp_y - y][temp_x + x]= EMPTY_SPACE - 30;
+					display_background_color[temp_y][temp_x] = EMPTY_SPACE - 30;
 				}
 		}
 		for (temp =0 ; temp <= hole_width; temp++){
+			// Painting tha FINNISH_GATE
 			display_background_color[0][temp_x + temp]= FINNISH_GATE;	
 		}
 	}
@@ -626,12 +629,12 @@ void throw_granade(int direction){
 		if (abs(tod - flying_tod) >= 100){	// print to tscreen granade every 0.1 sec
 			
 			display_background[temp_y][temp_x] = ' ';
-			if( direction == 1 ){// move granade left
+			if( direction == 1 && display_background_color[temp_y][temp_x-3] != WALL_COLOR && display_background_color[temp_y][temp_x+3] != FINNISH_GATE){// move granade left
 				temp_x--;
 				display_background[temp_y][temp_x] = '-';
 				display_background[temp_y][temp_x-1] = '<';
 			}
-			else {// move granade right.
+			else if(direction == 0 && display_background_color[temp_y][temp_x+3] != WALL_COLOR && display_background_color[temp_y][temp_x+3] != FINNISH_GATE){// move granade right.
 				temp_x++;
 				display_background[temp_y][temp_x] = '-';
 				display_background[temp_y][temp_x+1] = '>';
@@ -668,10 +671,10 @@ void throw_granade(int direction){
 			if (display_background_color[temp_y - y][temp_x + x] == HEARTCOLLOR){
 				free_heart(y, temp_y, x, temp_x);
 			}
-			display_background_color[temp_y - y][temp_x + x]= GRANADE_SMOKE_COLOR;
-			
+			display_background_color[temp_y - y][temp_x + x]= GRANADE_SMOKE_COLOR;	
 		}
 	}
+
 	if (display_background_color[temp_y][temp_x - 2] == HEARTCOLLOR || display_background_color[temp_y][temp_x + 2] == HEARTCOLLOR){
 				free_heart(y, temp_y, x, temp_x);
 	}
