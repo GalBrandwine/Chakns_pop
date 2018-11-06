@@ -414,15 +414,25 @@ reduce_life(){
 }
 
 void kill_chack() {
-	if ((display_background_color[chack.position.y][chack.position.x] == GRANADE_SMOKE_COLOR || display_background_color[chack.position.y][chack.position.x + 1] == GRANADE_SMOKE_COLOR || display_background_color[chack.position.y][chack.position.x - 1] == GRANADE_SMOKE_COLOR || kill_monster == 1) && chack_alive == 1) {				//kill chack
+	if ((display_background_color[chack.position.y][chack.position.x] == GRANADE_SMOKE_COLOR  || kill_monster == 1) && chack_alive == 1) {				//kill chack
 		chack_alive = 0;
-		display_background[chack.position.y][chack.position.x] = ' ';
-		display_background_color[chack.position.y][chack.position.x] = EMPTY_SPACE;
+		if (display_background_color[chack.position.y][chack.position.x] == GRANADE_SMOKE_COLOR)
+		{
+			display_background[chack.position.y][chack.position.x] = ' ';
+			display_background_color[chack.position.y][chack.position.x] = GRANADE_SMOKE_COLOR;
+		}
+		else
+		{
+			display_background[chack.position.y][chack.position.x] = ' ';
+			display_background_color[chack.position.y][chack.position.x] = EMPTY_SPACE;
+		}
+		
 		kill_monster = 0;					//cant be killed again by monster
 		display_background[3][4] = '^';//draw new chack
 		display_background_color[chack.position.y][chack.position.x] = CHACK_COLOR;
 		chack.position.y = 3;	//save new cords
 		chack.position.x = 4;
+		drawChack();
 		reduce_life();
 		send(dispid, 1);
 		if (chack.life == 0) { //ggwp
@@ -459,11 +469,13 @@ void moveChack(char side)
 			display_background[chack.position.y][chack.position.x] = ' ';
 			display_background_color[chack.position.y][chack.position.x] = EMPTY_SPACE;
 			chack.position.y = (chack.position.y - 1) % 25;
+			kill_chack();
 			drawChack();
 			sleept(1);
 			display_background[chack.position.y][chack.position.x] = ' ';
 			display_background_color[chack.position.y][chack.position.x] = EMPTY_SPACE;
 			chack.position.x = (chack.position.x + 1) % 80;
+			kill_chack();
 			drawChack();
 		}
 
@@ -475,6 +487,7 @@ void moveChack(char side)
 			display_background[chack.position.y][chack.position.x] = ' ';
 			display_background_color[chack.position.y][chack.position.x] = EMPTY_SPACE;
 			chack.position.x = (chack.position.x-1)%80;
+			kill_chack();
 		}
 		else
 			if (display_background_color[chack.position.y - 1][(chack.position.x - 1)] != WALL_COLOR && (display_background_color[chack.position.y - 1][(chack.position.x)] != WALL_COLOR))//if he can climb the wall
@@ -482,11 +495,13 @@ void moveChack(char side)
 				display_background[chack.position.y][chack.position.x] = ' ';
 				display_background_color[chack.position.y][chack.position.x] = EMPTY_SPACE;
 				chack.position.y = (chack.position.y - 1) % 80;
+				kill_chack();
 				drawChack();
 				sleept(1);
 				display_background[chack.position.y][chack.position.x] = ' ';
 				display_background_color[chack.position.y][chack.position.x] = EMPTY_SPACE;
 				chack.position.x = (chack.position.x - 1) % 80;
+				kill_chack();
 				drawChack();
 			}
 			
@@ -499,6 +514,7 @@ void moveChack(char side)
 			display_background_color[chack.position.y][chack.position.x] =EMPTY_SPACE;
 			chack.position.y = (chack.position.y - 1) % 25;
 			jumpCounter++;
+			kill_chack();
 			drawChack();
 			sleept(100);
 			
@@ -513,7 +529,7 @@ void moveChack(char side)
 			display_background[chack.position.y][chack.position.x] = ' ';
 			display_background_color[chack.position.y][chack.position.x] = EMPTY_SPACE;
 			chack.position.y = (chack.position.y + 1);
-
+			kill_chack();
 			drawChack();
 			sleept(100);
 		}
@@ -536,6 +552,7 @@ void moveChack(char side)
 		display_background[chack.position.y][chack.position.x] = ' ';
 		display_background_color[chack.position.y][chack.position.x] = EMPTY_SPACE;
 		chack.position.y = (chack.position.y + 1);
+		kill_chack();
 		drawChack();
 		sleept(100);
 	}
@@ -547,6 +564,7 @@ void moveChack(char side)
 		current_stage++;										//advance to the next stage
 		send(stage_manager_pid, current_stage);
 	}
+	kill_chack();
 	drawChack();
 }
 
