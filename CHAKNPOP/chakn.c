@@ -173,40 +173,6 @@ void setLatch(int latch)
 }
 
 
-/*------------------------------------------------------------------------
- *  new0x70isr  --  for controlling tiiming of the game.
- *------------------------------------------------------------------------
- */
-void interrupt new0x70isr(void)
-{
-  global_flag = 1;
-  global_timer++;
-  asm {
-   PUSH AX
-   PUSH BX
-   IN AL,70h   // Read existing port 70h
-   MOV BX,AX
-
-   MOV AL,0Ch  // Set up "Read status register C"
-   OUT 70h,AL  //
-   MOV AL,8Ch  //
-   OUT 70h,AL  //
-   IN AL,71h
-   MOV AX,BX   //  Restore port 70h
-   OUT 70h,AL  // 
-
-   MOV AL,20h   // Set up "EOI" value  
-   OUT 0A0h,AL  // Notify Secondary PIC
-   OUT 020h,AL  // Notify Primary PIC
-
-   POP BX
-   POP AX
-
-  } // asm */
-} // new0x70isr
-
-
-
 INTPROC new_int9(int mdevno)
 {
 	char result;
@@ -327,7 +293,6 @@ typedef struct chicken
 {
 	int level; // checken level will define how fast eggs are being layed.
 	POSITION position;
-	
 } CHICKEN;
 
 typedef struct monster
@@ -393,7 +358,7 @@ void drawInPosL(int pos,char letter,char att) //draw on screen
  */
 void drawChack()
 {
-	//chack.oldAtr = display_background_color[chack.position.y][chack.position.x] ;
+	
 	display_background[chack.position.y][chack.position.x] = '^';
 	display_background_color[chack.position.y][chack.position.x] =CHACK_COLOR;
 	send(dispid, 1);
@@ -402,13 +367,13 @@ void drawChack()
 reduce_life(){
 	switch (chack.life){
 		case 3: 
-			write_string(0,1,652,"LIFE:2");
+			write_string(0,1,WALL_COLOR,"LIFE:2");
 		break;
 		case 2:
-			write_string(0,1,652,"LIFE:1");
+			write_string(0,1,WALL_COLOR,"LIFE:1");
 		break;
 		case 1:
-			write_string(0,1,652,"LIFE:0");
+			write_string(0,1,WALL_COLOR,"LIFE:0");
 		break;
 		//add back to menu
 	}
@@ -469,7 +434,6 @@ void moveChack(char side)
 			display_background[chack.position.y][chack.position.x] = ' ';
 			display_background_color[chack.position.y][chack.position.x] = EMPTY_SPACE;
 			chack.position.x = (chack.position.x+1)%80;
-
 		}
 		else if ((display_background_color[chack.position.y - 1][(chack.position.x + 1)] == EMPTY_SPACE && (display_background_color[chack.position.y - 1][(chack.position.x)] == EMPTY_SPACE)) )//if he can climb the wall
 		{
@@ -638,7 +602,7 @@ void throw_granade(int direction){
 	
 
 	while (1){
-		if (abs(tod - flying_tod) >= 100){	// print to tscreen granade every 0.1 sec
+		if (abs(tod - flying_tod) >= 100){	// print to screen granade every 0.1 sec
 			
 			display_background[temp_y][temp_x] = ' ';
 			if( direction == 1 && display_background_color[temp_y][temp_x-3] != WALL_COLOR && display_background_color[temp_y][temp_x+3] != FINNISH_GATE){// move granade left
@@ -1026,11 +990,11 @@ void draw_chicken(CHICKEN *chicken_input){
 }
 
 
- /*------------------------------------------------------------------------
- *  stage_1  --  print stage 1 hard_coded
- *------------------------------------------------------------------------
- */
- void print_stage_1(){
+/*------------------------------------------------------------------------
+*  stage_1  --  print stage 1 hard_coded
+*------------------------------------------------------------------------
+*/
+void print_stage_1(){
 	int i,j,temp_j,pos;
 	int hole_flag =	0;
 	int edge_needed_left =1;
@@ -1044,7 +1008,7 @@ void draw_chicken(CHICKEN *chicken_input){
 			{
 				pos = 2*(i*80 + j);
 				// print stage rounding square
-				if (i == 0 || j == 0 || i == 24 || j == 79)
+				if( i ==0 || j == 0 || i ==24 || j==79)
 				{
 					display_background_color[i][j] = WALL_COLOR;
 				}
@@ -1084,14 +1048,14 @@ void draw_chicken(CHICKEN *chicken_input){
 
 		
 		sprintf(str, "LIFE:%d", chack.life);
-		write_string(0,1,652,str);
-		write_string(0,8,652,chack.name);
+		write_string(0,1,WALL_COLOR,str);
+		write_string(0,8,WALL_COLOR,chack.name);
 			
 			
 		drawChack();
 	}
 	send(dispid,1);
- }
+}
 
  /*------------------------------------------------------------------------
  *  stage_2  --  print stage 2 hard_coded
@@ -1225,7 +1189,7 @@ void draw_chicken(CHICKEN *chicken_input){
 			write_string(21,9,HEARTCOLLOR,"<B");
 
 			sprintf(str, "LIFE:%d", chack.life);
-			write_string(0,1,652,str);
+			write_string(0,1,WALL_COLOR,str);
 
 			drawChack();
 		}
@@ -1596,11 +1560,11 @@ void updateter()
 		{
 			moveChack('D');
 		}
-		else if (scan == 18)	// 'E' pressed
+		else if (scan == 18 && display_background_color[chack.position.y][chack.position.x +1 ] != WALL_COLOR &&  display_background_color[chack.position.y][chack.position.x +2 ] != WALL_COLOR)	// 'E' pressed
 		{
 			resume( create(throw_granade, INITSTK, INITPRIO, "Granade", 1,0) ); // Throw granade right.
 		}
-		else if (scan == 16)	// 'Q' pressed
+		else if (scan == 16 && display_background_color[chack.position.y][chack.position.x -1 ] != WALL_COLOR && display_background_color[chack.position.y][chack.position.x -2 ] != WALL_COLOR)	// 'Q' pressed
 		{
 			resume( create(throw_granade, INITSTK, INITPRIO, "Granade", 1,1) ); // Throw granade left.
 		}
@@ -1720,7 +1684,7 @@ void sound()
 	
 	while (1){
 		for(i=0;i<=110;i+=2){
-		Sound(chords[i]/40);
+		Sound(chords[i]/10);
 		sleept(chords[i+1]);
 		}
 	}
@@ -1735,8 +1699,6 @@ int sched_arr_int[10] = {-1};
 xmain()
 {
 	char *test;// = "chack_name";
-
-
 	setLatch(1193);		// for working in 1000hz +-
 	SetScreen();		//intiate screen mode
 	
