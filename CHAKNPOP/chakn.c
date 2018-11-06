@@ -128,7 +128,7 @@ Current stage parameters:
 */
 int current_stage = 0; 
 int displayer_sem = 1; 
-int receiver_pid;
+
 int (*old9newisr)(int);
 int uppid, dispid, recvpid, stage_manager_pid, stage_0_pid, stage_1_pid, stage_2_pid, stage_3_pid, platform_3_pid, platform_3_pid1,sound_id ;
 volatile int global_flag;
@@ -431,7 +431,7 @@ reduce_life(){
 		break;
 		//add back to menu
 	}
-	chack->life--;
+	
 }
 
 void kill_chack(){
@@ -452,11 +452,8 @@ void kill_chack(){
 					new_stage = 1;
 					kill_world=1;		//ggwp
 					write_string( 12,25,100,"GAME OVER RESTART AND TRY AGAIN" );
-					
 					send(dispid,1);		// do it for me imidiatly
-
-					//gameover
-				}
+				}//gameover
 	//REDUCE LIFE+ CHECK IF GAME OVER
 	}
 }
@@ -1009,8 +1006,9 @@ void draw_chicken(CHICKEN *chicken_input){
 			display_background[chicken->position.y][chicken->position.x]= ' ';
 			display_background[chicken->position.y][chicken->position.x-1]= ' ';
 			display_background[chicken->position.y][chicken->position.x+1]= ' ';
+			send(dispid,1);
 			kill(getpid());
-			}
+		}
 		
 	}
 }
@@ -1527,7 +1525,7 @@ void stage_2(){
 	chickenPosition->x=7;
 	chickenPosition->y=2;
 	chicken->position=*chickenPosition;
-	chicken->level = 1;
+	chicken->level = 2;
 	new_stage =0; //reset
 
 	resume( chicken_pid = create(draw_chicken, INITSTK, INITPRIO, "CHICKEN_DRAWER", 1, chicken) );
@@ -1550,7 +1548,7 @@ void stage_3(){
 	chickenPosition->x=7;
 	chickenPosition->y=2;
 	chicken->position=*chickenPosition;
-	chicken->level = 1;
+	chicken->level = 3;
 
 	resume( chicken_pid = create(draw_chicken, INITSTK, INITPRIO, "CHICKEN_DRAWER", 1, chicken) );
 }
@@ -1597,18 +1595,7 @@ void displayer( void ){
 } // prntr
 
 
-void receiver()
-{
-	while(1)
-	{
-		char temp;
-		temp = receive();
-		rear++;
-		ch_arr[rear] = temp;
-		if (front == -1)
-			front = 0;
-		} // while
-} //  receiver
+
 
 
 void updateter()
@@ -1769,27 +1756,32 @@ int sched_arr_pid[10] = {-1};
 int sched_arr_int[10] = {-1};
 
 
-SYSCALL schedule(int no_of_pids, int cycle_length, int pid1, ...)
-{
-  int i;
-  int ps;
-  int *iptr;
+SYSCALL schedule(int no_of_pids, int cycle_length, int pid1, ...){
+	/* Function for scheduling pre_created processes.
+	parameters:
+		no_of_pids: int, number of input pids.
+		cycle_length: int, how many ticks itll take to finnish a cycle.
+		pid1: int, a pid.
+	*/
+	int i;
+	int ps;
+	int *iptr;
 
-  disable(ps);
+	disable(ps);
 
-  gcycle_length = cycle_length;
-  point_in_cycle = 0;
-  gno_of_pids = no_of_pids;
+	gcycle_length = cycle_length;
+	point_in_cycle = 0;
+	gno_of_pids = no_of_pids;
 
-  iptr = &pid1;
-  for(i=0; i < no_of_pids; i++)
-  {
-    sched_arr_pid[i] = *iptr;
-    iptr++;
-    sched_arr_int[i] = *iptr;
-    iptr++;
-  } // for
-  restore(ps);
+	iptr = &pid1;
+	for(i=0; i < no_of_pids; i++){
+		sched_arr_pid[i] = *iptr;
+		iptr++;
+		sched_arr_int[i] = *iptr;
+		iptr++;
+	} // for
+
+	restore(ps);
 
 } // schedule 
 
@@ -1802,7 +1794,6 @@ xmain()
 	
 
     resume( dispid = create(displayer, INITSTK, INITPRIO, "DISPLAYER", 0) );
-    resume( recvpid = create(receiver, INITSTK, INITPRIO+3, "RECIVEVER", 0) );
 	resume( uppid = create(updateter, INITSTK, INITPRIO, "UPDATER", 0) );
 	
 	resume( stage_manager_pid = create(stage_manager, INITSTK, INITPRIO, "stage_manager", 0) );
@@ -1811,8 +1802,7 @@ xmain()
 	stage_2_pid = create(stage_2, INITSTK, INITPRIO, "STAGE2", 0);
 	stage_3_pid = create(stage_3, INITSTK, INITPRIO, "STAGE3", 0);
     resume(sound_id = create(sound, INITSTK, INITPRIO, "sound", 0));
-	
-	receiver_pid =recvpid;  
+	 
     set_new_int9_newisr();
 	
 	send(stage_manager_pid,0);		// activate stage_manager;
@@ -1821,10 +1811,11 @@ xmain()
 	chackPosition->x=7;
 	chackPosition->y=2;
 
+
 	chack->name = test;
 	chack->position=*chackPosition;
 	chack->life = NUMOFLIFES;
 	chack->gravity=1;
 		
-    schedule(7,57, dispid, 0,  uppid, 29, stage_manager_pid, 30, stage_0_pid, 32, stage_1_pid, 34, stage_2_pid, 36, stage_3_pid, 38);
+    schedule(7,1000, dispid, 0,  uppid, 1000, stage_manager_pid, 6000, stage_0_pid, 9000);//, stage_1_pid, 120, stage_2_pid, 150, stage_3_pid, 180);
 } // xmain	
