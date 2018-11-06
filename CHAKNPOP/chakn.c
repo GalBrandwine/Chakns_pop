@@ -127,15 +127,15 @@ int current_stage = 0;
 int displayer_sem = 1;
 
 int (*old9newisr)(int);
-int uppid, dispid, recvpid, stage_manager_pid, stage_0_pid, stage_1_pid, stage_2_pid, stage_3_pid, platform_3_pid, platform_3_pid1,sound_id,pause_pid,gameover_pid;
+int uppid, dispid, recvpid, stage_manager_pid, stage_0_pid, stage_1_pid, stage_2_pid, stage_3_pid, platform_3_pid, platform_2_pid,sound_id,pause_pid,gameover_pid;
 volatile int global_flag;
-volatile int global_timer = 0;
+volatile int global_timer =0 ;
 
-void interrupt(*old0x70isr)(void);
-void platform(int min, int max, int hight, int movment, int left);					//general platform function
+void interrupt (*old0x70isr)(void);
+void platform(int min,int max,int hight,int movment, int left,int my_num);					//general platform function
 
 void stage_3_platform();		// platform 3 proc
-void stage_3_platform2();		// platform 3 proc 2
+void stage_2_platform();		// platform 2 proc 
 void pauseinit();					//pause process
 void gameover();					//game over busy wait
 
@@ -162,7 +162,9 @@ int monstersKilled;
 volatile int pause_on=0;			//on when the gamepauses
 int pdidntletgo=0;					//to prevent holding the p button without letting go for pause after pause
 int gameover_on=0; //flag for game ending by timout
-
+int game_won=0; // flag for wining the game
+int stage2plat=0;		// 1 when the platform is alive 0 otherwise	
+int stage3plat=0;		// same
 
 /*------------------------------------------------------------------------
 *  Latch  --  for changing game speed.
@@ -1281,10 +1283,11 @@ void print_stage_2() {
 		sprintf(str, "LIFE:%d", chack.life);
 		write_string(0, 1, WALL_COLOR, str);
 
-		drawChack();
-	}
-	send(dispid, 1);
-}
+			drawChack();
+		}
+		send(dispid,1);
+		resume( platform_2_pid = create(stage_2_platform, INITSTK, INITPRIO, "STAGE2PLAT2", 0) );
+ }
 
 
 /*------------------------------------------------------------------------
@@ -1415,27 +1418,32 @@ void print_stage_3() {
 		// heart 3
 		write_string(21, 9, HEARTCOLLOR, "<B");
 
-		sprintf(str, "LIFE:%d", chack.life);
-		write_string(0, 1, 652, str);
+			sprintf(str, "LIFE:%d", chack.life);
+			write_string(0,1,652,str);
+			
+			
+			drawChack();
+		}
+		signal(displayer_sem);
+		send(dispid,1);
+		resume( platform_3_pid = create(stage_3_platform, INITSTK, INITPRIO, "STAGE3PLAT1", 0) );
+		
+ }
 
 
-		drawChack();
-	}
-	signal(displayer_sem);
-	send(dispid, 1);
-	resume(platform_3_pid = create(stage_3_platform, INITSTK, INITPRIO, "STAGE3PLAT1", 0));
-	resume(platform_3_pid1 = create(stage_3_platform2, INITSTK, INITPRIO, "STAGE3PLAT2", 0));
-}
-
-
-void platform(int min, int max, int hight, int movment, int left) {	//min==1 max==20
+void platform(int min,int max,int hight,int movment,int left,int my_num){	//comments below
 	int plat_tod;
 	int go_back = left;
 	int max_mov = 0;
 	plat_tod = tod;
 
-	if (left == 1) max_mov = movment;
+	if (left == 1){
+		max_mov = movment;
+	}
 	while (1) {
+		if((stage2plat==0 && my_num==2) ||(stage3plat==0 && my_num==3)){	// the platform will die naturally
+			return;
+		}
 		if (abs(tod - plat_tod) >= 1000) {
 			wait(displayer_sem);
 			if (go_back == 0) {
@@ -1466,28 +1474,35 @@ void platform(int min, int max, int hight, int movment, int left) {	//min==1 max
 			plat_tod = tod;
 			send(dispid, 1);
 		}
+	} 
+}
+
+
+ void stage_3_platform(){	//min==1 max==19 hight 18 movment 5
+		int min =1;			//start of platform
+		int max = 20;		// end of platform
+		int hight = 18;		// y value of platform
+		int movment = 5;	// num of movments the platform will do
+		int left = 0 ;		// intial direction of the platform
+		int my_num = 3;		// which stage i belong to
+		stage3plat=1;		//platform is live
+		platform(min,max,hight,movment,left,my_num);
+		kill(getpid());//because the func ended, platform needs 2 die so it will end naturally
+
+}
+
+
+void stage_2_platform(){	
+		int min =30;
+		int max = 78;
+		int hight = 10;
+		int movment = 7;
+		int left = 1;
+		int my_num = 2;
+		stage2plat=1;
+		platform(min,max,hight,movment,left,my_num);
+		kill(getpid());//because the func ended, platform needs 2 die so it will end naturally
 	}
-}
-
-
-void stage_3_platform() {	//min==1 max==19 hight 18 movment 5
-	int min = 1;
-	int max = 20;
-	int hight = 18;
-	int movment = 5;
-	int left = 0;
-	platform(min, max, hight, movment, left);
-}
-
-
-void stage_3_platform2() {
-	int min = 30;
-	int max = 78;
-	int hight = 10;
-	int movment = 7;
-	int left = 1;
-	platform(min, max, hight, movment, left);
-}
 
 
 /*------------------------------------------------------------------------
@@ -1612,7 +1627,12 @@ void stage_manager() {
 			resume(stage_2_pid);
 			break;
 		case 3://	activate stage 3
-			resume(stage_3_pid);
+			stage2plat=0;		//	kills stage 2 platform
+			resume( stage_3_pid);
+			break;
+		case 4: //you won the Game
+			stage3plat=0;	//kills stage 3 platform
+			game_won=1;
 			break;
 		}
 	}
@@ -1637,6 +1657,13 @@ void displayer( void ){
 					write_string(12, 25, 100, "YOUR TIME IS OVER RESTART AND TRY AGAIN");
 					write_string(13, 25, 100,"________________________________");
 				}
+					if(game_won==1){
+						gameover_on=1;
+					write_string(11, 25, 100,"________________________________");		//save end game msg on array
+					write_string(12, 25, 100, "YOU WON THE GAME! YAY RESTART TO TRY AGAIN");
+					write_string(13, 25, 100,"________________________________");
+					
+					}
 			   for(i=0;i<25;i++)
 			   {
 				   for(j=0;j<80;j++)
