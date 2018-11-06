@@ -13,6 +13,11 @@ extern int gcycle_length;
 extern int point_in_cycle;
 extern int gno_of_pids;
 
+/*UPDATE */
+extern int timer;			//counting 5 min
+extern int timer_on;		//starting timer when on
+/*	END_UPDATE*/
+
 SYSCALL noresched_send(pid, msg)
 int	pid;
 int	msg;
@@ -74,6 +79,17 @@ int mdevno;				/* minor device number		*/
             resched_flag = 1;
         } // if
     } // for
+	
+	 /*UPDATE*/
+	   if(timer_on>0){	// timer on is 1 at the start of every new stage, it goes up by 1 every 1 sec,
+		   timer++;
+		   if(timer>=1000){ // to count the secounds individually for better precision
+			   timer_on++;	//when this gets the 300 5 min have passed
+			   timer=0;
+		   }
+		}
+		
+		/*END_UPDATE*/
 
     if (resched_flag == 1){
  		resched();
