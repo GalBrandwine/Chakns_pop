@@ -116,7 +116,7 @@ extern struct intmap far *sys_imp;
 #define MONSTER_COLOR 0x30
 #define MAX_MONSTERS 10
 #define MAX_ENEMIES 15
-
+#define CHACK_COLOR 55
 #define GRANADE_SMOKE_COLOR 70
 
 /*
@@ -339,9 +339,9 @@ typedef struct monster
 	char direction;		//the direction of the monster(U,D,R,L)
 	POSITION position;
 	POSITION oldPosition;
-	char oldAttribute[3];
-	char oldChar[3];
-	
+	char oldAttribute;
+	char oldChar;
+
 }MONSTER;
 
 
@@ -396,10 +396,10 @@ void drawInPosL(int pos,char letter,char att) //draw on screen
  */
 void drawChack()
 {
-	display_background[chack.position.y][chack.position.x]= '^';
-	display_background[chack.position.y][chack.position.x-1]= '(';
-	display_background[chack.position.y][chack.position.x+1]= ')';
-	send(dispid,1);
+	
+	display_background[chack.position.y][chack.position.x] = '^';
+	display_background_color[chack.position.y][chack.position.x] =CHACK_COLOR;
+	send(dispid, 1);
 }
 
 reduce_life(){
@@ -418,29 +418,28 @@ reduce_life(){
 	chack.life--;
 }
 
-void kill_chack(){
-	if((display_background_color[chack.position.y][chack.position.x] == GRANADE_SMOKE_COLOR || display_background_color[chack.position.y][chack.position.x+1] == GRANADE_SMOKE_COLOR || display_background_color[chack.position.y][chack.position.x-1] == GRANADE_SMOKE_COLOR || kill_monster==1)  && chack_alive==1){				//kill chack
-				chack_alive=0;
-				display_background[chack.position.y][chack.position.x]= ' ';
-				display_background[chack.position.y][chack.position.x-1]= ' ';
-				display_background[chack.position.y][chack.position.x+1]= ' ';
-				kill_monster=0;					//cant be killed again by monster
-				display_background[3][4]= '^';//draw new chack
-				display_background[3][3]= '(';
-				display_background[3][5]= ')';
-				chack.position.y=3;	//save new cords
-				chack.position.x=4;
-				reduce_life();
-				send(dispid,1);
-				if(chack.life ==0){ //ggwp
-					new_stage = 1;
-					kill_world=1;		//ggwp
-					write_string( 10,25,100,"_______________________________" );
-					write_string( 12,25,100,"GAME OVER RESTART AND TRY AGAIN" );
-					write_string( 13,25,100,"_______________________________" );
-					send(dispid,1);		// do it for me imidiatly
-				}//gameover
-	//REDUCE LIFE+ CHECK IF GAME OVER
+void kill_chack() {
+	if ((display_background_color[chack.position.y][chack.position.x] == GRANADE_SMOKE_COLOR || display_background_color[chack.position.y][chack.position.x + 1] == GRANADE_SMOKE_COLOR || display_background_color[chack.position.y][chack.position.x - 1] == GRANADE_SMOKE_COLOR || kill_monster == 1) && chack_alive == 1) {				//kill chack
+		chack_alive = 0;
+		display_background[chack.position.y][chack.position.x] = ' ';
+		display_background_color[chack.position.y][chack.position.x] = EMPTY_SPACE;
+		kill_monster = 0;					//cant be killed again by monster
+		display_background[3][4] = '^';//draw new chack
+		display_background_color[chack.position.y][chack.position.x] = CHACK_COLOR;
+		chack.position.y = 3;	//save new cords
+		chack.position.x = 4;
+		reduce_life();
+		send(dispid, 1);
+		if (chack.life == 0) { //ggwp
+			new_stage = 1;
+			kill_world = 1;		//ggwp
+			write_string(12, 25, 100, "GAME OVER RESTART AND TRY AGAIN");
+
+			send(dispid, 1);		// do it for me imidiatly
+
+									//gameover
+		}
+		//REDUCE LIFE+ CHECK IF GAME OVER
 	}
 }
 
@@ -448,61 +447,62 @@ void moveChack(char side)
 {
 	int jumpCounter=0;
 	display_background[chack.position.y][chack.position.x]= ' ';
-	display_background[chack.position.y][chack.position.x-1]= ' ';
-	display_background[chack.position.y][chack.position.x+1]= ' ';
+	display_background_color[chack.position.y][chack.position.x] = EMPTY_SPACE;
 	
 	switch (side)
 	{
-		case 'R'://move  right
-		if(display_background_color[chack.position.y][(chack.position.x+1)] != WALL_COLOR)//if its not green wall
+	case 'R'://move  right
+		
+		 if ((display_background_color[chack.position.y][(chack.position.x + 1)] == FINNISH_GATE) || display_background_color[chack.position.y][(chack.position.x + 1)] == EMPTY_SPACE)//if its not green wall
 		{
+			display_background[chack.position.y][chack.position.x] = ' ';
+			display_background_color[chack.position.y][chack.position.x] = EMPTY_SPACE;
 			chack.position.x = (chack.position.x+1)%80;
 		}
-		else if(display_background_color[chack.position.y-1][(chack.position.x+1)] != WALL_COLOR && (display_background_color[chack.position.y-1][(chack.position.x)] != WALL_COLOR))//if he can climb the wall
+		else if ((display_background_color[chack.position.y - 1][(chack.position.x + 1)] == EMPTY_SPACE && (display_background_color[chack.position.y - 1][(chack.position.x)] == EMPTY_SPACE)) )//if he can climb the wall
 		{
-			display_background[chack.position.y][chack.position.x]= ' ';
-			display_background[chack.position.y][chack.position.x-1]= ' ';
-			display_background[chack.position.y][chack.position.x+1]= ' ';
-			chack.position.y = (chack.position.y-1)%80;
+			display_background[chack.position.y][chack.position.x] = ' ';
+			display_background_color[chack.position.y][chack.position.x] = EMPTY_SPACE;
+			chack.position.y = (chack.position.y - 1) % 25;
 			drawChack();
 			sleept(1);
-			display_background[chack.position.y][chack.position.x]= ' ';
-			display_background[chack.position.y][chack.position.x-1]= ' ';
-			display_background[chack.position.y][chack.position.x+1]= ' ';
-			chack.position.x = (chack.position.x+1)%80;
+			display_background[chack.position.y][chack.position.x] = ' ';
+			display_background_color[chack.position.y][chack.position.x] = EMPTY_SPACE;
+			chack.position.x = (chack.position.x + 1) % 80;
 			drawChack();
 		}
 
 		break;
-		case 'L'://move left
-		if(display_background_color[chack.position.y][(chack.position.x-1)] != WALL_COLOR)//if its not green wall
+	case 'L'://move left
+		
+		  if ((display_background_color[chack.position.y][(chack.position.x - 1)] == FINNISH_GATE) || display_background_color[chack.position.y][(chack.position.x - 1)] == EMPTY_SPACE)//if its not green wall
 		{
+			display_background[chack.position.y][chack.position.x] = ' ';
+			display_background_color[chack.position.y][chack.position.x] = EMPTY_SPACE;
 			chack.position.x = (chack.position.x-1)%80;
 		}
 		else
-			if(display_background_color[chack.position.y-1][(chack.position.x-1)] != WALL_COLOR && (display_background_color[chack.position.y-1][(chack.position.x)] != WALL_COLOR))//if he can climb the wall
-		{
-			display_background[chack.position.y][chack.position.x]= ' ';
-			display_background[chack.position.y][chack.position.x-1]= ' ';
-			display_background[chack.position.y][chack.position.x+1]= ' ';
-			chack.position.y = (chack.position.y-1)%80;
-			drawChack();
-			sleept(1);
-			display_background[chack.position.y][chack.position.x]= ' ';
-			display_background[chack.position.y][chack.position.x-1]= ' ';
-			display_background[chack.position.y][chack.position.x+1]= ' ';
-			chack.position.x = (chack.position.x-1)%80;
-			drawChack();
-		}
+			if (display_background_color[chack.position.y - 1][(chack.position.x - 1)] != WALL_COLOR && (display_background_color[chack.position.y - 1][(chack.position.x)] != WALL_COLOR))//if he can climb the wall
+			{
+				display_background[chack.position.y][chack.position.x] = ' ';
+				display_background_color[chack.position.y][chack.position.x] = EMPTY_SPACE;
+				chack.position.y = (chack.position.y - 1) % 80;
+				drawChack();
+				sleept(1);
+				display_background[chack.position.y][chack.position.x] = ' ';
+				display_background_color[chack.position.y][chack.position.x] = EMPTY_SPACE;
+				chack.position.x = (chack.position.x - 1) % 80;
+				drawChack();
+			}
+			
 		break;
-		case 'U'://move up
-		jumpCounter =0;
-		while((display_background_color[chack.position.y-1][(chack.position.x)] != WALL_COLOR) && (jumpCounter<3))
+	case 'U'://move up
+		jumpCounter = 0;
+		while (((display_background_color[chack.position.y - 1][(chack.position.x )] == FINNISH_GATE) || display_background_color[chack.position.y - 1][(chack.position.x)] == EMPTY_SPACE) && (jumpCounter<3))
 		{
-			display_background[chack.position.y][chack.position.x]= ' ';
-			display_background[chack.position.y][chack.position.x-1]= ' ';
-			display_background[chack.position.y][chack.position.x+1]= ' ';
-			chack.position.y = (chack.position.y-1)%25;
+			display_background[chack.position.y][chack.position.x] = ' ';
+			display_background_color[chack.position.y][chack.position.x] =EMPTY_SPACE;
+			chack.position.y = (chack.position.y - 1) % 25;
 			jumpCounter++;
 			drawChack();
 			sleept(100);
@@ -512,20 +512,19 @@ void moveChack(char side)
 			chack.gravity=0;
 		}
 		break;
-		case 'D'://move down
-		while((display_background_color[chack.position.y+1][(chack.position.x)]!= WALL_COLOR))//chack is falling
-	{
-		display_background[chack.position.y][chack.position.x]= ' ';
-		display_background[chack.position.y][chack.position.x-1]= ' ';
-		display_background[chack.position.y][chack.position.x+1]= ' ';
-		chack.position.y = (chack.position.y+1);
-		
-		drawChack();
-		sleept(100);
+	case 'D'://move down
+		while ((display_background_color[chack.position.y + 1][(chack.position.x )] == FINNISH_GATE) || (display_background_color[chack.position.y + 1][(chack.position.x)] == EMPTY_SPACE))//chack is falling
+		{
+			display_background[chack.position.y][chack.position.x] = ' ';
+			display_background_color[chack.position.y][chack.position.x] = EMPTY_SPACE;
+			chack.position.y = (chack.position.y + 1);
+
+			drawChack();
+			sleept(100);
+		}
+		break;
 	}
-	break;
-}
-	if((display_background_color[chack.position.y+1][(chack.position.x)] != WALL_COLOR))
+	if ((display_background_color[chack.position.y + 1][(chack.position.x)] != FINNISH_GATE) && (display_background_color[chack.position.y + 1][(chack.position.x)] != WALL_COLOR))
 	{
 		if( (display_background_color[chack.position.y-1][(chack.position.x)] == WALL_COLOR))
 		{
@@ -537,12 +536,11 @@ void moveChack(char side)
 		}	
 	
 	}
-	while((chack.gravity==1) && (display_background_color[chack.position.y+1][(chack.position.x)]!= WALL_COLOR))//chack is falling
+	while ((chack.gravity == 1) && ((display_background_color[chack.position.y + 1][(chack.position.x )] != FINNISH_GATE) && display_background_color[chack.position.y + 1][(chack.position.x)] != WALL_COLOR  && display_background_color[chack.position.y + 1][(chack.position.x)] != HEARTCOLLOR))//chack is falling
 	{
-		display_background[chack.position.y][chack.position.x]= ' ';
-		display_background[chack.position.y][chack.position.x-1]= ' ';
-		display_background[chack.position.y][chack.position.x+1]= ' ';
-		chack.position.y = (chack.position.y+1);
+		display_background[chack.position.y][chack.position.x] = ' ';
+		display_background_color[chack.position.y][chack.position.x] = EMPTY_SPACE;
+		chack.position.y = (chack.position.y + 1);
 		drawChack();
 		sleept(100);
 	}
@@ -695,31 +693,28 @@ void moveMonster( MONSTER *monster)
 	sleept(1);
 	switch (monster->direction)
 	{
-		case 'R'://move  right
-		if((display_background_color[monster->position.y][(monster->position.x+2)] != WALL_COLOR))
+	case 'R'://move  right
+		if ((display_background_color[monster->position.y][(monster->position.x + 1)] != WALL_COLOR))
 		{
 			if(monster->position.x==chack.position.x && monster->position.y==chack.position.y){
 				kill_monster=1;
 				kill_chack();
 				
 			}
-			monster->oldAttribute[0] = monster->oldAttribute[1];
-			monster->oldAttribute[1] = monster->oldAttribute[2];
-			monster->oldAttribute[2] = display_background_color[monster->position.y][monster->position.x + 2];
-			monster->oldChar[0] = monster->oldChar[1];
-			monster->oldChar[1] = monster->oldChar[2];
-			monster->oldChar[2] = display_background[monster->position.y][monster->position.x + 2];
+			
+			monster->oldAttribute = display_background_color[monster->position.y][monster->position.x + 1];
+			
+			monster->oldChar = display_background[monster->position.y][monster->position.x + 1];
 
 
 			monster->oldPosition.y = monster->position.y;
 			monster->oldPosition.x = monster->position.x;
-			display_background[monster->oldPosition.y][monster->oldPosition.x - 1] = monster->oldChar[0];
-			display_background[monster->oldPosition.y][monster->oldPosition.x] = monster->oldChar[1];
-			display_background[monster->oldPosition.y][monster->oldPosition.x + 1] = monster->oldChar[2];
-			display_background_color[monster->oldPosition.y][monster->oldPosition.x - 1] = monster->oldAttribute[0];
-			display_background_color[monster->oldPosition.y][monster->oldPosition.x] = monster->oldAttribute[1];
-			display_background_color[monster->oldPosition.y][monster->oldPosition.x + 1] = monster->oldAttribute[2];
-			monster->position.x = (monster->position.x+1)%80;
+			display_background[monster->oldPosition.y][monster->oldPosition.x] = monster->oldChar;
+			
+			;
+			display_background_color[monster->oldPosition.y][monster->oldPosition.x] = monster->oldAttribute;
+			
+			monster->position.x = (monster->position.x + 1) % 80;
 			sleept(50);
 			
 			
@@ -729,31 +724,29 @@ void moveMonster( MONSTER *monster)
 			 monster->direction =randDirection();
 		 }
 		break;
-		case 'L'://move left
-		if((display_background_color[monster->position.y][(monster->position.x-2)] != WALL_COLOR))
+	case 'L'://move left
+		if ((display_background_color[monster->position.y][(monster->position.x - 1)] != WALL_COLOR))
 		{
 			if(monster->position.x==chack.position.x && monster->position.y==chack.position.y){
 				kill_monster=1;
 				kill_chack();
 				
 			}
-			monster->oldAttribute[0] = display_background_color[monster->position.y][monster->position.x - 2];
-			monster->oldAttribute[1] = monster->oldAttribute[0];
-			monster->oldAttribute[2] = monster->oldAttribute[1];
-			monster->oldChar[0] = display_background[monster->position.y][monster->position.x - 2];
-			monster->oldChar[1] = monster->oldChar[0];
-			monster->oldChar[2] = monster->oldChar[1];
+			monster->oldAttribute = display_background_color[monster->position.y][monster->position.x - 1];
+			
+			monster->oldChar = display_background[monster->position.y][monster->position.x - 1];
+		
 
 
 			monster->oldPosition.y = monster->position.y;
 			monster->oldPosition.x = monster->position.x;
-			display_background[monster->oldPosition.y][monster->oldPosition.x - 1] = monster->oldChar[0];
-			display_background[monster->oldPosition.y][monster->oldPosition.x] = monster->oldChar[1];
-			display_background[monster->oldPosition.y][monster->oldPosition.x + 1] = monster->oldChar[2];
-			display_background_color[monster->oldPosition.y][monster->oldPosition.x - 1] = monster->oldAttribute[0];
-			display_background_color[monster->oldPosition.y][monster->oldPosition.x] = monster->oldAttribute[1];
-			display_background_color[monster->oldPosition.y][monster->oldPosition.x + 1] = monster->oldAttribute[2];
-			monster->position.x = (monster->position.x-1)%80;
+			
+			display_background[monster->oldPosition.y][monster->oldPosition.x] = monster->oldChar;
+			
+			
+			display_background_color[monster->oldPosition.y][monster->oldPosition.x] = monster->oldAttribute;
+			
+			monster->position.x = (monster->position.x - 1) % 80;
 			sleept(50);
 			
 		}
@@ -770,22 +763,20 @@ void moveMonster( MONSTER *monster)
 				kill_chack();
 				
 			}
-			monster->oldAttribute[0] =EMPTY_SPACE;
-			monster->oldAttribute[1] = EMPTY_SPACE;
-			monster->oldAttribute[2] = EMPTY_SPACE;
-			monster->oldChar[0] =' ';
-			monster->oldChar[1] = ' ';
-			monster->oldChar[2] = ' ';
+			monster->oldAttribute = display_background_color[monster->position.y - 1][monster->position.x ];
+			
+			monster->oldChar = display_background[monster->position.y - 1][monster->position.x];
+			
 
 			monster->oldPosition.y = monster->position.y;
 			monster->oldPosition.x = monster->position.x;
-			display_background[monster->oldPosition.y][monster->oldPosition.x - 1] = monster->oldChar[0];
-			display_background[monster->oldPosition.y][monster->oldPosition.x] = monster->oldChar[1];
-			display_background[monster->oldPosition.y][monster->oldPosition.x + 1] = monster->oldChar[2];
-			display_background_color[monster->oldPosition.y][monster->oldPosition.x - 1] = monster->oldAttribute[0];
-			display_background_color[monster->oldPosition.y][monster->oldPosition.x] = monster->oldAttribute[1];
-			display_background_color[monster->oldPosition.y][monster->oldPosition.x + 1] = monster->oldAttribute[2];
-			monster->position.y = (monster->position.y-1)%25;
+		
+			display_background[monster->oldPosition.y][monster->oldPosition.x] = monster->oldChar;
+			
+			
+			display_background_color[monster->oldPosition.y][monster->oldPosition.x] = monster->oldAttribute;
+			
+			monster->position.y = (monster->position.y - 1) % 25;
 
 			sleept(50);
 		}
@@ -802,23 +793,21 @@ void moveMonster( MONSTER *monster)
 				kill_chack();
 				
 			}
-			monster->oldAttribute[0] = EMPTY_SPACE;
-			monster->oldAttribute[1] = EMPTY_SPACE;
-			monster->oldAttribute[2] = EMPTY_SPACE;
-			monster->oldChar[0] = ' ';
-			monster->oldChar[1] = ' ';
-			monster->oldChar[2] = ' ';
+			monster->oldAttribute = display_background_color[monster->position.y + 1][(monster->position.x)];
+			
+			
+			monster->oldChar = display_background[monster->position.y + 1][(monster->position.x)];
 
 			monster->oldPosition.y = monster->position.y;
 			monster->oldPosition.x = monster->position.x;
-			display_background[monster->oldPosition.y][monster->oldPosition.x - 1] = monster->oldChar[0];
-			display_background[monster->oldPosition.y][monster->oldPosition.x] = monster->oldChar[1];
-			display_background[monster->oldPosition.y][monster->oldPosition.x + 1] = monster->oldChar[2];
-			display_background_color[monster->oldPosition.y][monster->oldPosition.x - 1] = monster->oldAttribute[0];
-			display_background_color[monster->oldPosition.y][monster->oldPosition.x] = monster->oldAttribute[1];
-			display_background_color[monster->oldPosition.y][monster->oldPosition.x + 1] = monster->oldAttribute[2];
-			monster->position.y = (monster->position.y+1)%25;
 			
+			display_background[monster->oldPosition.y][monster->oldPosition.x] = monster->oldChar;
+			
+			
+			display_background_color[monster->oldPosition.y][monster->oldPosition.x] = monster->oldAttribute;
+			
+			monster->position.y = (monster->position.y + 1) % 25;
+
 			sleept(50);
 		}
 		else
@@ -839,18 +828,18 @@ void drawMonster(MONSTER *monster)
 	if (display_background_color[monster->position.y][monster->position.x]== GRANADE_SMOKE_COLOR || display_background[monster->position.y][monster->position.x-1]== GRANADE_SMOKE_COLOR || display_background[monster->position.y][monster->position.x+1]== GRANADE_SMOKE_COLOR){
 			kill(getpid());
 		}
-	if (new_stage==1){
-		kill(getpid());
-	}
-	display_background[monster->position.y][monster->position.x-1]= '<';
-	display_background[monster->position.y][monster->position.x]= '=';
-	display_background[monster->position.y][monster->position.x+1]= 'D';
-	display_background_color[monster->position.y][monster->position.x-1]= MONSTER_COLOR;
-	display_background_color[monster->position.y][monster->position.x]= MONSTER_COLOR;
-	display_background_color[monster->position.y][monster->position.x+1]= MONSTER_COLOR;
-	
-	send(dispid,1);
-	sleept(25);
+		if (new_stage == 1) {
+			kill(getpid());
+		}
+		
+		display_background[monster->position.y][monster->position.x] = 'M';
+		
+		
+		display_background_color[monster->position.y][monster->position.x] = MONSTER_COLOR;
+		
+
+		send(dispid, 1);
+		sleept(25);
 	}
 }
 
@@ -902,17 +891,15 @@ void lay_egg(int init_egg_laying_position_y, int init_egg_laying_position_x){
 		display_background[temp_y][temp_x] = '*';
 	}
 
-	monsterPosition.x= temp_x;
-	monsterPosition.y= temp_y;
+	monsterPosition.x = temp_x;
+	monsterPosition.y = temp_y;
+
+	m.position = monsterPosition;
+	m.direction = 'D';
+	m.oldAttribute = EMPTY_SPACE;
 	
-	m.position=monsterPosition;
-	m.direction='D';
-	m.oldAttribute[0] = EMPTY_SPACE;
-	m.oldAttribute[1] = EMPTY_SPACE;
-	m.oldAttribute[2] = EMPTY_SPACE;
-	m.oldChar[0] = ' ';
-	m.oldChar[1] = ' ';
-	m.oldChar[2] = ' ';
+	m.oldChar = ' ';
+	
 	drawMonster(&m);
 }
 
