@@ -5,9 +5,13 @@
 #include <sleep.h>
 #include <io.h>
 #include <proc.h>
+#include <math.h>
 
 extern int sched_arr_pid[];
 extern int sched_arr_int[];
+
+extern int invincible;
+extern int monstersKilled;
 
 extern int gcycle_length;
 extern int point_in_cycle;
@@ -52,10 +56,25 @@ int mdevno;				/* minor device number		*/
 {
 	int	i;
     int resched_flag;
-
-        
+	static int count30secondsAfterGrenade;//counter of the time after 2 monsters killed
+	static int toCount30Seconds=0; 
+	
 	tod++;
 
+	
+	if(2 <= monstersKilled)//if 2 or more monsters were killed y the last grenade
+	{
+		count30secondsAfterGrenade=tod;
+		toCount30Seconds=1;
+	}
+	if((30000 <= (abs(tod - count30secondsAfterGrenade))) && ( 1 == toCount30Seconds))//count 30 seconds
+	{
+		invincible = 1;//chack is invincible 
+	}
+	else{//if 30 seconds passed 
+		invincible = 0;//chack is not invincible  anymore
+		toCount30Seconds=0;
+	}
     resched_flag = 0;
 	if (slnempty){
 		if ( (--*sltop) <= 0 ){
