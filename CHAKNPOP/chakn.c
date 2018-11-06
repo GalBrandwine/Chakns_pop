@@ -20,11 +20,6 @@
 #define ON (1)
 #define OFF (0)
 
-int new_stage =0;					//kill button for monsters and chickens
-int chack_alive = 1;				//chack can die if its 1
-int kill_world=0;					//shutdown
-int kill_monster = 0;				//monster killed chak?
-
 void ChangeSpeaker(int status){
 	int portval;
 	//   portval = inportb( 0x61 );
@@ -140,18 +135,18 @@ void platform(int min,int max,int hight,int movment, int left);					//general pl
 void stage_3_platform();		// platform 3 proc
 void stage_3_platform2();		// platform 3 proc 2
 
-char display[2001];			//char
-char display_color[2001];	//Color
+
 char display_background [25][80]; //level design
 char display_background_color [25][80]; //level design color, for sampeling where the items are in the screen
-char ch_arr[2048];
-int front = -1;
-int rear = -1;
 
 int point_in_cycle;
 int gcycle_length;
 int gno_of_pids;
 
+int new_stage =0;					//kill button for monsters and chickens
+int chack_alive = 1;				//chack can die if its 1
+int kill_world=0;					//shutdown
+int kill_monster = 0;				//monster killed chak?
 int chicken_pid;
 int eggs_layed;
 int max_enemies[MAX_ENEMIES];
@@ -433,15 +428,15 @@ void kill_chack() {
 		if (chack.life == 0) { //ggwp
 			new_stage = 1;
 			kill_world = 1;		//ggwp
+			write_string(11, 25, 100,"________________________________");
 			write_string(12, 25, 100, "GAME OVER RESTART AND TRY AGAIN");
-
+			write_string(13, 25, 100,"________________________________");
 			send(dispid, 1);		// do it for me imidiatly
-
-									//gameover
-		}
+		}//gameover
 		//REDUCE LIFE+ CHECK IF GAME OVER
 	}
 }
+
 
 void moveChack(char side)
 {
@@ -643,7 +638,10 @@ void throw_granade(int direction){
 	display_background[temp_y][temp_x-1] = '<';
 
 
+	
 	// Ugly busy/wait loop.
+	// wait for 3 seconds before exploding.
+	granade_explode_timer = tod;
 	while (abs(tod - granade_explode_timer) <= 3000){
 	}
 	
@@ -668,6 +666,8 @@ void throw_granade(int direction){
 	// Reset granade_explode_timer timer;
 	granade_explode_timer = tod;
 	grenade_sound();
+
+	// Ugly busy/wait loop.
 	while (abs(tod - granade_explode_timer) <= 3000){
 	}
 
@@ -823,20 +823,20 @@ void drawMonster(MONSTER *monster)
 	
 	while(1)
 	{
-	moveMonster(monster);
-	// kill a monster 
-	if (display_background_color[monster->position.y][monster->position.x]== GRANADE_SMOKE_COLOR || display_background[monster->position.y][monster->position.x-1]== GRANADE_SMOKE_COLOR || display_background[monster->position.y][monster->position.x+1]== GRANADE_SMOKE_COLOR){
+		moveMonster(monster);
+		// kill a monster 
+		if (display_background_color[monster->position.y][monster->position.x]== GRANADE_SMOKE_COLOR || display_background[monster->position.y][monster->position.x-1]== GRANADE_SMOKE_COLOR || display_background[monster->position.y][monster->position.x+1]== GRANADE_SMOKE_COLOR){
 			kill(getpid());
 		}
 		if (new_stage == 1) {
 			kill(getpid());
 		}
 		
+		write_string(monster->position.y, monster->position.x, MONSTER_COLOR, "M");
+		/*
 		display_background[monster->position.y][monster->position.x] = 'M';
-		
-		
 		display_background_color[monster->position.y][monster->position.x] = MONSTER_COLOR;
-		
+		*/
 
 		send(dispid, 1);
 		sleept(25);
@@ -1345,30 +1345,15 @@ void draw_chicken(CHICKEN *chicken_input){
 			}
 
 			// Print stage hearts.
-			// by the function: pos = 2*(i*80 + j);
 			// heart 1
 			write_string(7,9,HEARTCOLLOR,"<B");
-			/*			
-			display_background[7][9] = '<';
-			display_background_color[7][9] = WALL_COLOR;
-			display_background[7][10] = 'B';
-			display_background_color[7][10] = WALL_COLOR;
-			*/
 
 			// heart 2
-			display_background[17][55] = '<';
-			display_background_color[17][55] = HEARTCOLLOR;
-			
-			display_background[17][56] = 'B';
-			display_background_color[17][56] = HEARTCOLLOR;
-			
+			write_string(17,55,HEARTCOLLOR,"<B");
+
 			// heart 3
-			display_background[21][9] = '<';
-			display_background_color[21][9] = HEARTCOLLOR;
-			
-			display_background[21][10] = 'B';
-			display_background_color[21][10] = HEARTCOLLOR;
-			
+			write_string(21,9,HEARTCOLLOR,"<B");
+
 			sprintf(str, "LIFE:%d", chack.life);
 			write_string(0,1,652,str);
 			
@@ -1380,15 +1365,15 @@ void draw_chicken(CHICKEN *chicken_input){
 		resume( platform_3_pid = create(stage_3_platform, INITSTK, INITPRIO, "STAGE3PLAT1", 0) );
 		resume( platform_3_pid1 = create(stage_3_platform2, INITSTK, INITPRIO, "STAGE3PLAT2", 0) );
  }
- void platform(int min,int max,int hight,int movment,int left){	//min==1 max==20
+
+
+void platform(int min,int max,int hight,int movment,int left){	//min==1 max==20
 	int plat_tod;
 	int go_back=left;
 	int max_mov=0;
 	plat_tod=tod;
 
 	if (left==1) max_mov = movment;
-
-
 	while (1){
 		if (abs(tod-plat_tod) >= 1000){
 			
@@ -1420,7 +1405,9 @@ void draw_chicken(CHICKEN *chicken_input){
 			send(dispid,1);	
 		}
 	} 
- }
+}
+
+
  void stage_3_platform(){	//min==1 max==19 hight 18 movment 5
 		int min =1;
 		int max = 20;
@@ -1428,7 +1415,9 @@ void draw_chicken(CHICKEN *chicken_input){
 		int movment = 5;
 		int left = 0 ; 
 		platform(min,max,hight,movment,left);
-	}
+}
+
+
 void stage_3_platform2(){	
 		int min =30;
 		int max = 78;
@@ -1465,12 +1454,15 @@ void stage_3_platform2(){
 	send(dispid,1);
  }
 
+
 void stage_0(){//menu stage
 	chack.position.x=2;
 	chack.position.y=2;
 	print_stage_0();	// print stage on the screen
 }
-  void stage_1(){
+
+
+void stage_1(){
 	// create a chicken.
 	CHICKEN *chicken;
 	POSITION *chickenPosition;
@@ -1481,16 +1473,16 @@ void stage_0(){//menu stage
 	chack.position.y=2;
 	print_stage_1();	// print stage on the screen
 	 
-	 // initiate chicken.
+	// initiate chicken.
 	chickenPosition=(POSITION *)malloc(sizeof(POSITION));
 	chickenPosition->x=7;
 	chickenPosition->y=2;
 	chicken->position=*chickenPosition;
 	chicken->level = 1;
 	resume( chicken_pid = create(draw_chicken, INITSTK, INITPRIO, "CHICKEN_DRAWER", 1, chicken) );
-	
-	  
- }
+}
+
+
 void stage_2(){
 	// create a chicken.
 	CHICKEN *chicken;
@@ -1575,9 +1567,6 @@ void displayer( void ){
 			   signal(displayer_sem);
          } //while
 } // prntr
-
-
-
 
 
 void updateter()
@@ -1731,44 +1720,15 @@ void sound()
 	return(0);
 }
 
-
 int sched_arr_pid[10] = {-1};
 int sched_arr_int[10] = {-1};
 
-/*
-SYSCALL schedule(int no_of_pids, int cycle_length, int pid1, ...){
-	/* Function for scheduling pre_created processes.
-	parameters:
-		no_of_pids: int, number of input pids.
-		cycle_length: int, how many ticks itll take to finnish a cycle.
-		pid1: int, a pid.
-	
-	int i;
-	int ps;
-	int *iptr;
-
-	disable(ps);
-
-	gcycle_length = cycle_length;
-	point_in_cycle = 0;
-	gno_of_pids = no_of_pids;
-
-	iptr = &pid1;
-	for(i=0; i < no_of_pids; i++){
-		sched_arr_pid[i] = *iptr;
-		iptr++;
-		sched_arr_int[i] = *iptr;
-		iptr++;
-	} // for
-
-	restore(ps);
-
-} // schedule 
-*/
 
 xmain()
 {
-	char test[10] = "chack_name";
+	char *test;// = "chack_name";
+
+
 	setLatch(1193);		// for working in 1000hz +-
 	SetScreen();		//intiate screen mode
 	
@@ -1792,10 +1752,13 @@ xmain()
 	chackPosition->y=2;
 
 
+	test = malloc(strlen("chack_name")*sizeof(char)+1);
+    strcpy(test, "chack_name");
+ 
 	chack.name = test;
 	chack.position=*chackPosition;
 	chack.life = NUMOFLIFES;
 	chack.gravity=1;
-		
+	free(test);		
     //schedule(7,100, dispid, 1,  uppid, 30, stage_manager_pid, 60, stage_0_pid, 90);//, stage_1_pid, 120, stage_2_pid, 150, stage_3_pid, 180);
 } // xmain	
