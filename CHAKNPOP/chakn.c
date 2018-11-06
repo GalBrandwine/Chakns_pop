@@ -113,6 +113,7 @@ extern struct intmap far *sys_imp;
 #define MAX_MONSTERS 10
 #define MAX_ENEMIES 15
 #define CHACK_COLOR 55
+#define CHACK_COLOR_UPSIDE 30
 #define GRANADE_SMOKE_COLOR 70
 #define nextLevel 80
 /*
@@ -365,7 +366,14 @@ void drawChack()
 	
 	wait(displayer_sem);
 	display_background[chack.position.y][chack.position.x] = '^';
-	display_background_color[chack.position.y][chack.position.x] =CHACK_COLOR;
+	if (chack.gravity == 1)
+	{
+		display_background_color[chack.position.y][chack.position.x] = CHACK_COLOR;
+	}
+	else
+	{
+		display_background_color[chack.position.y][chack.position.x] = CHACK_COLOR_UPSIDE;
+	}
 	signal(displayer_sem);
 	send(dispid, 1);
 
@@ -536,6 +544,7 @@ void moveChack(char side)
 	case 'D'://move down
 		while ((display_background_color[chack.position.y + 1][(chack.position.x )] == FINNISH_GATE) || (display_background_color[chack.position.y + 1][(chack.position.x)] == EMPTY_SPACE))//chack is falling
 		{
+			chack.gravity = 1;
 			wait(displayer_sem);
 			display_background[chack.position.y][chack.position.x] = ' ';
 			display_background_color[chack.position.y][chack.position.x] = EMPTY_SPACE;
