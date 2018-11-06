@@ -415,7 +415,7 @@ reduce_life(){
 		break;
 		//add back to menu
 	}
-	chack.life--;
+	
 }
 
 void kill_chack(){
@@ -435,9 +435,7 @@ void kill_chack(){
 				if(chack.life ==0){ //ggwp
 					new_stage = 1;
 					kill_world=1;		//ggwp
-					write_string( 10,25,100,"_______________________________" );
 					write_string( 12,25,100,"GAME OVER RESTART AND TRY AGAIN" );
-					write_string( 13,25,100,"_______________________________" );
 					send(dispid,1);		// do it for me imidiatly
 				}//gameover
 	//REDUCE LIFE+ CHECK IF GAME OVER
@@ -1011,7 +1009,7 @@ void draw_chicken(CHICKEN *chicken_input){
 	int edge_needed_right =0;
 	int hole_size = 5;
 	int number_of_hearts = 3;
-	char str[7];
+	char str[2];
 		for(i = 0; i < 25; i++ )
 		{
 			for(j = 0; j < 80; j++)
@@ -1049,33 +1047,27 @@ void draw_chicken(CHICKEN *chicken_input){
 		// Print stage hearts.
 		// by the function: pos = 2*(i*80 + j);
 		// heart 1
-		write_string(7,9,HEARTCOLLOR,"<B");
-		/*
 		display_background[7][9] = '<';
 		display_background_color[7][9] = WALL_COLOR;
 		display_background[7][10] = 'B';
 		display_background_color[7][10] = WALL_COLOR;
-		*/
+
 		// heart 2
-		write_string(15,55,HEARTCOLLOR,"<B");
-		/*
 		display_background[15][55] = '<';
-		display_background_color[15][55] = HEARTCOLLOR;	
+		display_background_color[15][55] = HEARTCOLLOR;
+			
 		display_background[15][56] = 'B';
 		display_background_color[15][56] = HEARTCOLLOR;
-		*/	
+			
 		// heart 3
-		write_string(19,9,HEARTCOLLOR,"<B");
-		/*
 		display_background[19][9] = '<';
 		display_background_color[19][9] = HEARTCOLLOR;
+			
 		display_background[19][10] = 'B';
 		display_background_color[19][10] = HEARTCOLLOR;
-		*/
-		
-		sprintf(str, "LIFE:%d", chack.life);
-		write_string(0,1,652,str);
-		write_string(0,8,652,chack.name);
+			
+		//sprintf(str, "LIFE:%d", chack.life);
+		//write_string(0,1,652,str);
 			
 			
 		drawChack();
@@ -1094,8 +1086,7 @@ void draw_chicken(CHICKEN *chicken_input){
 	int edge_needed_right =0;
 	int hole_size = 5;
 	int number_of_hearts = 3;
-	char str[7];
-
+	
 		for(i = 0; i < 25; i++ )
 		{
 			for(j = 0; j < 80; j++)
@@ -1204,41 +1195,30 @@ void draw_chicken(CHICKEN *chicken_input){
 			// Print stage hearts.
 			// by the function: pos = 2*(i*80 + j);
 			// heart 1
-			write_string(7,9,HEARTCOLLOR,"<B");
-			/*
 			display_background[7][9] = '<';
 			display_background_color[7][9] = WALL_COLOR;
 			display_background[7][10] = 'B';
 			display_background_color[7][10] = WALL_COLOR;
-			*/
 
 			// heart 2
-			write_string(17,55,HEARTCOLLOR,"<B");
-			/*
 			display_background[17][55] = '<';
 			display_background_color[17][55] = HEARTCOLLOR;
+			
 			display_background[17][56] = 'B';
 			display_background_color[17][56] = HEARTCOLLOR;
-			*/
-
+			
 			// heart 3
-			write_string(21,9,HEARTCOLLOR,"<B");
-			/*
 			display_background[21][9] = '<';
 			display_background_color[21][9] = HEARTCOLLOR;
+			
 			display_background[21][10] = 'B';
 			display_background_color[21][10] = HEARTCOLLOR;
-			*/
-
-			sprintf(str, "LIFE:%d", chack.life);
-			write_string(0,1,652,str);
-
+			
+			
 			drawChack();
 		}
 		send(dispid,1);
  }
-
-
  /*------------------------------------------------------------------------
  *  stage_3  --  print stage 3 hard_coded
  *------------------------------------------------------------------------
@@ -1250,8 +1230,7 @@ void draw_chicken(CHICKEN *chicken_input){
 	int edge_needed_right =0;
 	int hole_size = 5;
 	int number_of_hearts = 3;
-	char str[7];
-
+	
 		for(i = 0; i < 25; i++ )
 		{
 			for(j = 0; j < 80; j++)
@@ -1360,13 +1339,10 @@ void draw_chicken(CHICKEN *chicken_input){
 			// Print stage hearts.
 			// by the function: pos = 2*(i*80 + j);
 			// heart 1
-			write_string(7,9,HEARTCOLLOR,"<B");
-			/*			
 			display_background[7][9] = '<';
 			display_background_color[7][9] = WALL_COLOR;
 			display_background[7][10] = 'B';
 			display_background_color[7][10] = WALL_COLOR;
-			*/
 
 			// heart 2
 			display_background[17][55] = '<';
@@ -1382,8 +1358,7 @@ void draw_chicken(CHICKEN *chicken_input){
 			display_background[21][10] = 'B';
 			display_background_color[21][10] = HEARTCOLLOR;
 			
-			sprintf(str, "LIFE:%d", chack.life);
-			write_string(0,1,652,str);
+
 			
 			
 			drawChack();
@@ -1744,11 +1719,11 @@ void sound()
 	return(0);
 }
 
-
+/*
 int sched_arr_pid[10] = {-1};
 int sched_arr_int[10] = {-1};
 
-/*
+
 SYSCALL schedule(int no_of_pids, int cycle_length, int pid1, ...){
 	/* Function for scheduling pre_created processes.
 	parameters:
@@ -1781,7 +1756,7 @@ SYSCALL schedule(int no_of_pids, int cycle_length, int pid1, ...){
 
 xmain()
 {
-	char test[10] = "chack_name";
+	char *test = strdup("chack_name");
 	setLatch(1193);		// for working in 1000hz +-
 	SetScreen();		//intiate screen mode
 	
