@@ -20,6 +20,7 @@ extern int gno_of_pids;
 /*UPDATE */
 extern int timer;			//counting 5 min
 extern int timer_on;		//starting timer when on
+extern int pause_on;		//stoping timer when in pause mood
 /*	END_UPDATE*/
 
 SYSCALL noresched_send(pid, msg)
@@ -59,7 +60,7 @@ int mdevno;				/* minor device number		*/
 	static int count30secondsAfterGrenade;//counter of the time after 2 monsters killed
 	static int toCount30Seconds=0; 
 	
-	tod++;
+
 
 	
 	if(2 <= monstersKilled)//if 2 or more monsters were killed y the last grenade
@@ -100,7 +101,8 @@ int mdevno;				/* minor device number		*/
     } // for
 	
 	 /*UPDATE*/
-	   if(timer_on>0){	// timer on is 1 at the start of every new stage, it goes up by 1 every 1 sec,
+	  if(timer_on>0 && pause_on==0){	// timer on is 1 at the start of every new stage, it goes up by 1 every 1 sec,
+			tod++;	
 		   timer++;
 		   if(timer>=1000){ // to count the secounds individually for better precision
 			   timer_on++;	//when this gets the 300 5 min have passed
