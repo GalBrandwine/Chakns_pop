@@ -1066,8 +1066,8 @@ void draw_chicken(CHICKEN *chicken_input){
 
 		
 		sprintf(str, "LIFE:%d", chack.life);
-		write_string(0,1,652,str);
-		write_string(0,8,652,chack.name);
+		write_string(0,1,WALL_COLOR,str);
+		write_string(0,8,WALL_COLOR,chack.name);
 			
 			
 		drawChack();
@@ -1207,7 +1207,7 @@ void draw_chicken(CHICKEN *chicken_input){
 			write_string(21,9,HEARTCOLLOR,"<B");
 
 			sprintf(str, "LIFE:%d", chack.life);
-			write_string(0,1,652,str);
+			write_string(0,1,WALL_COLOR,str);
 
 			drawChack();
 		}
@@ -1344,7 +1344,7 @@ void draw_chicken(CHICKEN *chicken_input){
 			write_string(21,9,HEARTCOLLOR,"<B");
 
 			sprintf(str, "LIFE:%d", chack.life);
-			write_string(0,1,652,str);
+			write_string(0,1,WALL_COLOR,str);
 			
 			
 			drawChack();
@@ -1701,7 +1701,7 @@ void sound()
 	
 	while (1){
 		for(i=0;i<=110;i+=2){
-		Sound(chords[i]/40);
+		Sound(chords[i]/10);
 		sleept(chords[i+1]);
 		}
 	}
