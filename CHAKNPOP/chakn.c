@@ -163,6 +163,7 @@ volatile int pause_on=0;			//on when the gamepauses
 int pdidntletgo=0;					//to prevent holding the p button without letting go for pause after pause
 int gameover_on=0; //flag for game ending by timout
 
+
 /*------------------------------------------------------------------------
 *  Latch  --  for changing game speed.
 *------------------------------------------------------------------------
@@ -763,9 +764,10 @@ void throw_granade(int direction) {
 */
 void moveMonster(MONSTER *monster)
 {
-
+	
+	
 	int newDirection;
-	sleept(1);
+	sleept(50);
 	switch (monster->direction)
 	{
 	case 'R'://move  right
@@ -788,7 +790,7 @@ void moveMonster(MONSTER *monster)
 			monster->oldPosition.x = monster->position.x;
 			
 			monster->position.x = (monster->position.x + 1) % 80;
-			sleept(50);
+			
 
 
 		}
@@ -817,7 +819,7 @@ void moveMonster(MONSTER *monster)
 
 		
 			monster->position.x = (monster->position.x - 1) % 80;
-			sleept(50);
+			
 
 		}
 		else
@@ -847,7 +849,7 @@ void moveMonster(MONSTER *monster)
 			signal(displayer_sem);
 			monster->position.y = (monster->position.y - 1) % 25;
 
-			sleept(50);
+			
 		}
 		else
 		{
@@ -875,7 +877,7 @@ void moveMonster(MONSTER *monster)
 
 			monster->position.y = (monster->position.y + 1) % 25;
 
-			sleept(50);
+			
 		}
 		else
 		{
@@ -888,23 +890,41 @@ void moveMonster(MONSTER *monster)
 
 void drawMonster(MONSTER *monster)
 {
-
+	int time_counter = tod;
+	int changeSpeedIndicator = tod;
+	int moveFrequency = 1400;
 	while (1)
 	{
-		moveMonster(monster);
-		// kill a monster 
-		if (display_background_color[monster->position.y][monster->position.x] == GRANADE_SMOKE_COLOR || display_background[monster->position.y][monster->position.x - 1] == GRANADE_SMOKE_COLOR || display_background[monster->position.y][monster->position.x + 1] == GRANADE_SMOKE_COLOR) {
-			monstersKilled++;
-			kill(getpid());
+		if ( (current_stage == 2) && (abs(tod - changeSpeedIndicator) >= 60000))//in stage two every minute the monster speed will increase cy 20%
+		{
+			moveFrequency = moveFrequency * 83 / 100;
+			changeSpeedIndicator = tod;
 		}
-		if (new_stage == 1) {
-			kill(getpid());
+		if ((current_stage == 3) && (abs(tod - changeSpeedIndicator) >= 10000))//in stage three every 10 seconds the monster speed will change randomally
+		{
+			moveFrequency = moveFrequency * (rand() % 1000) / 1000;
+			changeSpeedIndicator = tod;
 		}
 
-		write_string(monster->position.y, monster->position.x, MONSTER_COLOR, "M");
+		if (abs(tod - time_counter) >= moveFrequency)//the monster will move once in every 'moveFrequency' ticks
+		{
 
-		send(dispid, 1);
-		sleept(25);
+
+			time_counter = tod;
+			moveMonster(monster);
+			// kill a monster 
+			if (display_background_color[monster->position.y][monster->position.x] == GRANADE_SMOKE_COLOR || display_background[monster->position.y][monster->position.x - 1] == GRANADE_SMOKE_COLOR || display_background[monster->position.y][monster->position.x + 1] == GRANADE_SMOKE_COLOR) {
+				monstersKilled++;
+				kill(getpid());
+			}
+			if (new_stage == 1) {
+				kill(getpid());
+			}
+
+			write_string(monster->position.y, monster->position.x, MONSTER_COLOR, "M");
+
+			send(dispid, 1);
+		}
 	}
 }
 
