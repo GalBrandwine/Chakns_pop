@@ -818,6 +818,7 @@ void moveMonster( MONSTER *monster)
 	}
 }
 
+
 void drawMonster(MONSTER *monster)
 {
 	
@@ -842,6 +843,7 @@ void drawMonster(MONSTER *monster)
 		sleept(25);
 	}
 }
+
 
 void lay_egg(int init_egg_laying_position_y, int init_egg_laying_position_x){
 	/* Function for laying eggs.
@@ -902,6 +904,7 @@ void lay_egg(int init_egg_laying_position_y, int init_egg_laying_position_x){
 	
 	drawMonster(&m);
 }
+
 
 void move_chicken(CHICKEN *chicken_input){ // move chicken by stage setup.
 	CHICKEN *chicken = chicken_input;
