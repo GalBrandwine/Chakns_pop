@@ -12,6 +12,8 @@ extern int sched_arr_int[];
 extern int gcycle_length;
 extern int point_in_cycle;
 extern int gno_of_pids;
+extern int itzik;
+extern int kill_world;
 
 SYSCALL noresched_send(pid, msg)
 int	pid;
@@ -46,36 +48,41 @@ INTPROC clkint(mdevno)
 int mdevno;				/* minor device number		*/
 {
 	int	i;
-        int resched_flag;
+    int resched_flag;
 
         
 	tod++;
 
-        resched_flag = 0;
-	if (slnempty)
-		if ( (--*sltop) <= 0 )
-                     {
-                        resched_flag = 1;
+    resched_flag = 0;
+	if (slnempty){
+		if ( (--*sltop) <= 0 ){
+			resched_flag = 1;
 			wakeup();
-                     } /* if */
-
-	if ( (--preempt) <= 0 )
+		} /* if */
+	}
+	if ( (--preempt) <= 0 ){
              resched_flag = 1;
-
-       point_in_cycle++;
-       if (point_in_cycle == gcycle_length)
+	}
+    point_in_cycle++;
+    if (point_in_cycle == gcycle_length){
          point_in_cycle = 0;
+	}
 
-       for(i=0; i < gno_of_pids; i++) 
-       {
-          if(point_in_cycle == sched_arr_int[i])
-            {
-             noresched_send(sched_arr_pid[i], 11);
-             resched_flag = 1;
-            } // if
-       } // for
+    for(i=0; i < gno_of_pids; i++) 
+    {
+        if(point_in_cycle == sched_arr_int[i])
+        {
+            noresched_send(sched_arr_pid[i], 11);
+            resched_flag = 1;
+        } // if
+    } // for
 
-       if (resched_flag == 1)
+    if (resched_flag == 1){
  		resched();
+	}
+
+	if(itzik == 100){
+		//kill_world = 1;
+	}
 
 } // clkint

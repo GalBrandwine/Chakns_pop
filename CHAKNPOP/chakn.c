@@ -114,6 +114,7 @@ extern struct intmap far *sys_imp;
 #define CHACK_COLOR 55
 #define GRANADE_SMOKE_COLOR 70
 
+int itzik;
 /*
 Current stage parameters:
 	0 - menu, 
@@ -1344,7 +1345,7 @@ void draw_chicken(CHICKEN *chicken_input){
 			write_string(21,9,HEARTCOLLOR,"<B");
 
 			sprintf(str, "LIFE:%d", chack.life);
-			write_string(0,1,WALL_COLOR,str);
+			write_string(0,1,652,str);
 			
 			
 			drawChack();
@@ -1716,7 +1717,7 @@ int sched_arr_int[10] = {-1};
 xmain()
 {
 	char *test;// = "chack_name";
-
+	itzik = 100;
 
 	setLatch(1193);		// for working in 1000hz +-
 	SetScreen();		//intiate screen mode

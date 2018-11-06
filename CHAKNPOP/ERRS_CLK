@@ -1,6 +1,6 @@
 Turbo C++ Version 3.00 Copyright (c) 1992 Borland International
 xinu4win\newsrc\gm\chaknpop\clkint.c:
-Warning xinu4win\newsrc\gm\chaknpop\clkint.c 81: Function should return a value in function clkint
-Warning xinu4win\newsrc\gm\chaknpop\clkint.c 81: Parameter 'mdevno' is never used in function clkint
+Warning xinu4win\newsrc\gm\chaknpop\clkint.c 88: Function should return a value in function clkint
+Warning xinu4win\newsrc\gm\chaknpop\clkint.c 88: Parameter 'mdevno' is never used in function clkint
 
 	Available memory 4140636
