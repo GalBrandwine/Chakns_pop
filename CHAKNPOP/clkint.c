@@ -12,8 +12,6 @@ extern int sched_arr_int[];
 extern int gcycle_length;
 extern int point_in_cycle;
 extern int gno_of_pids;
-extern int itzik;
-extern int kill_world;
 
 SYSCALL noresched_send(pid, msg)
 int	pid;
@@ -80,9 +78,4 @@ int mdevno;				/* minor device number		*/
     if (resched_flag == 1){
  		resched();
 	}
-
-	if(itzik == 100){
-		//kill_world = 1;
-	}
-
 } // clkint

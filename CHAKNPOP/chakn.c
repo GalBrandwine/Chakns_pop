@@ -114,7 +114,7 @@ extern struct intmap far *sys_imp;
 #define CHACK_COLOR 55
 #define GRANADE_SMOKE_COLOR 70
 
-int itzik;
+
 /*
 Current stage parameters:
 	0 - menu, 
@@ -172,40 +172,6 @@ void setLatch(int latch)
 		  STI
 	}
 }
-
-
-/*------------------------------------------------------------------------
- *  new0x70isr  --  for controlling tiiming of the game.
- *------------------------------------------------------------------------
- */
-void interrupt new0x70isr(void)
-{
-  global_flag = 1;
-  global_timer++;
-  asm {
-   PUSH AX
-   PUSH BX
-   IN AL,70h   // Read existing port 70h
-   MOV BX,AX
-
-   MOV AL,0Ch  // Set up "Read status register C"
-   OUT 70h,AL  //
-   MOV AL,8Ch  //
-   OUT 70h,AL  //
-   IN AL,71h
-   MOV AX,BX   //  Restore port 70h
-   OUT 70h,AL  // 
-
-   MOV AL,20h   // Set up "EOI" value  
-   OUT 0A0h,AL  // Notify Secondary PIC
-   OUT 020h,AL  // Notify Primary PIC
-
-   POP BX
-   POP AX
-
-  } // asm */
-} // new0x70isr
-
 
 
 INTPROC new_int9(int mdevno)
@@ -401,13 +367,13 @@ void drawChack()
 reduce_life(){
 	switch (chack.life){
 		case 3: 
-			write_string(0,1,652,"LIFE:2");
+			write_string(0,1,WALL_COLOR,"LIFE:2");
 		break;
 		case 2:
-			write_string(0,1,652,"LIFE:1");
+			write_string(0,1,WALL_COLOR,"LIFE:1");
 		break;
 		case 1:
-			write_string(0,1,652,"LIFE:0");
+			write_string(0,1,WALL_COLOR,"LIFE:0");
 		break;
 		//add back to menu
 	}
@@ -621,7 +587,7 @@ void throw_granade(int direction){
 	
 
 	while (1){
-		if (abs(tod - flying_tod) >= 100){	// print to tscreen granade every 0.1 sec
+		if (abs(tod - flying_tod) >= 100){	// print to screen granade every 0.1 sec
 			
 			display_background[temp_y][temp_x] = ' ';
 			if( direction == 1 && display_background_color[temp_y][temp_x-3] != WALL_COLOR && display_background_color[temp_y][temp_x+3] != FINNISH_GATE){// move granade left
@@ -1009,11 +975,11 @@ void draw_chicken(CHICKEN *chicken_input){
 }
 
 
- /*------------------------------------------------------------------------
- *  stage_1  --  print stage 1 hard_coded
- *------------------------------------------------------------------------
- */
- void print_stage_1(){
+/*------------------------------------------------------------------------
+*  stage_1  --  print stage 1 hard_coded
+*------------------------------------------------------------------------
+*/
+void print_stage_1(){
 	int i,j,temp_j,pos;
 	int hole_flag =	0;
 	int edge_needed_left =1;
@@ -1074,7 +1040,7 @@ void draw_chicken(CHICKEN *chicken_input){
 		drawChack();
 	}
 	send(dispid,1);
- }
+}
 
  /*------------------------------------------------------------------------
  *  stage_2  --  print stage 2 hard_coded
@@ -1578,11 +1544,11 @@ void updateter()
 		{
 			moveChack('D');
 		}
-		else if (scan == 18)	// 'E' pressed
+		else if (scan == 18 && display_background_color[chack.position.y][chack.position.x +1 ] != WALL_COLOR &&  display_background_color[chack.position.y][chack.position.x +2 ] != WALL_COLOR)	// 'E' pressed
 		{
 			resume( create(throw_granade, INITSTK, INITPRIO, "Granade", 1,0) ); // Throw granade right.
 		}
-		else if (scan == 16)	// 'Q' pressed
+		else if (scan == 16 && display_background_color[chack.position.y][chack.position.x -1 ] != WALL_COLOR && display_background_color[chack.position.y][chack.position.x -2 ] != WALL_COLOR)	// 'Q' pressed
 		{
 			resume( create(throw_granade, INITSTK, INITPRIO, "Granade", 1,1) ); // Throw granade left.
 		}
@@ -1717,8 +1683,6 @@ int sched_arr_int[10] = {-1};
 xmain()
 {
 	char *test;// = "chack_name";
-	itzik = 100;
-
 	setLatch(1193);		// for working in 1000hz +-
 	SetScreen();		//intiate screen mode
 	
