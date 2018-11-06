@@ -127,7 +127,7 @@ int current_stage = 0;
 int displayer_sem = 1; 
 
 int (*old9newisr)(int);
-int uppid, dispid, recvpid, stage_manager_pid, stage_0_pid, stage_1_pid, stage_2_pid, stage_3_pid, platform_3_pid, platform_3_pid1,sound_id ;
+int uppid, dispid, recvpid, stage_manager_pid, stage_0_pid, stage_1_pid, stage_2_pid, stage_3_pid, platform_3_pid, platform_3_pid1,sound_id,pause_pid,gameover_pid;
 volatile int global_flag;
 volatile int global_timer =0 ;
 
@@ -136,6 +136,8 @@ void platform(int min,int max,int hight,int movment, int left);					//general pl
 
 void stage_3_platform();		// platform 3 proc
 void stage_3_platform2();		// platform 3 proc 2
+void pauseinit();					//pause process
+void gameover();					//game over busy wait
 
 
 char display_background [25][80]; //level design
@@ -145,6 +147,9 @@ int point_in_cycle;
 int gcycle_length;
 int gno_of_pids;
 
+int timer;		// for use in ckint		to count 30 sec/5 min
+int timer_on;	//for use in clkint
+
 int new_stage =0;					//kill button for monsters and chickens
 int chack_alive = 1;				//chack can die if its 1
 int kill_world=0;					//shutdown
@@ -152,7 +157,9 @@ int kill_monster = 0;				//monster killed chak?
 int chicken_pid;
 int eggs_layed;
 int max_enemies[MAX_ENEMIES];
-
+volatile int pause_on=0;			//on when the gamepauses
+int pdidntletgo=0;					//to prevent holding the p button without letting go for pause after pause
+int gameover_on=0; //flag for game ending by timout
 
 /*------------------------------------------------------------------------
  *  Latch  --  for changing game speed.
@@ -204,6 +211,14 @@ INTPROC new_int9(int mdevno)
 			INT 27
 		}
     } // if
+	else if( scan == 25 && pdidntletgo==0){	//p was pressed pause the game
+		pdidntletgo=1;
+		pause_on=1-pause_on;	// tp pause or release
+
+	}
+	else if ( scan == 153){
+			pdidntletgo=0;
+	}
     else if ((scan == 2) && (ctrl_pressed == 1)) // Control-C?
 		send(butlerpid, MSGPSNAP);
     else if ((scan == 3) && (ctrl_pressed == 1)) // Control-C?
@@ -1501,6 +1516,8 @@ void stage_1(){
 	chicken->position=*chickenPosition;
 	chicken->level = 1;
 	new_stage = 0; //reset
+	timer_on =1;	//Reset	because we started a new stage, count 5 min from this moment.
+	timer = 0;		//reset
 	resume( chicken_pid = create(draw_chicken, INITSTK, INITPRIO, "CHICKEN_DRAWER", 1, chicken) );
 }
 
@@ -1522,7 +1539,9 @@ void stage_2(){
 	chickenPosition->y=2;
 	chicken->position=*chickenPosition;
 	chicken->level = 2;
-	new_stage =0; //reset
+	new_stage = 0; //reset
+	timer_on =1;	//Reset	because we started a new stage, count 5 min from this moment.
+	timer = 0;		//reset
 
 	resume( chicken_pid = create(draw_chicken, INITSTK, INITPRIO, "CHICKEN_DRAWER", 1, chicken) );
 	
@@ -1546,6 +1565,8 @@ void stage_3(){
 	chicken->position=*chickenPosition;
 	chicken->level = 3;
 	new_stage = 0; //reset
+	timer_on =1;	//Reset	because we started a new stage, count 5 min from this moment.
+	timer = 0;		//reset
 	resume( chicken_pid = create(draw_chicken, INITSTK, INITPRIO, "CHICKEN_DRAWER", 1, chicken) );
 }
 
@@ -1570,7 +1591,12 @@ void stage_manager(){
 		}
 	}
 }
-
+void gameover(){				//busy wait end of game
+	ChangeSpeaker(OFF);
+	
+	while(1){
+	}		
+}
  
 void displayer( void ){	
 	//This process display the matrix, receive message (and return to ready) with every change in the screen matrix
@@ -1579,6 +1605,12 @@ void displayer( void ){
          {
                receive();
 			   wait(displayer_sem);
+				   if(timer_on>300){		//5 min have passed
+					gameover_on=1;
+					write_string(11, 25, 100,"________________________________");		//save end game msg on array
+					write_string(12, 25, 100, "YOUR TIME IS OVER RESTART AND TRY AGAIN");
+					write_string(13, 25, 100,"________________________________");
+				}
 			   for(i=0;i<25;i++)
 			   {
 				   for(j=0;j<80;j++)
@@ -1587,10 +1619,25 @@ void displayer( void ){
 					   drawInPosL(pos,display_background[i][j],display_background_color[i][j]);	// display the whole screen
 				   }
 			   }
+			   if(gameover_on==1){		
+					resume(gameover_pid = create(gameover, INITSTK, INITPRIO+2, "TIMEOUT", 0) ); // busy wait process gameover
+				}
 			   signal(displayer_sem);
          } //while
 } // prntr
 
+
+
+void pauseinit(){
+	ChangeSpeaker(OFF);
+	
+	while(1){
+		if(pause_on==0)	//p was pressed again, we need to kill the pasue
+			break;
+	}
+	ChangeSpeaker(ON);
+	kill(getpid());
+}
 
 void updateter()
 {
@@ -1611,6 +1658,11 @@ void updateter()
 		{
 			moveChack('D');
 		}
+		else if ((scan == 25)) // 'P' pressed
+		{
+			resume(pause_pid = create(pauseinit, INITSTK, INITPRIO+1, "pause", 0) ); // busy wait process pausing all other processes
+		}
+		
 		else if (scan == 18 && display_background_color[chack.position.y][chack.position.x +1 ] != WALL_COLOR &&  display_background_color[chack.position.y][chack.position.x +2 ] != WALL_COLOR)	// 'E' pressed
 		{
 			resume( create(throw_granade, INITSTK, INITPRIO, "Granade", 1,0) ); // Throw granade right.
