@@ -346,7 +346,7 @@ typedef struct monster
 
 
 POSITION *chackPosition;
-CHACK *chack;
+CHACK chack;
 MONSTER monsters[MAX_MONSTERS];	// Array of monsters, for controlling theirs PID's
 
 
@@ -396,38 +396,22 @@ void drawInPosL(int pos,char letter,char att) //draw on screen
  */
 void drawChack()
 {
-	display_background[chack->position.y][chack->position.x]= '^';
-	display_background[chack->position.y][chack->position.x-1]= '(';
-	display_background[chack->position.y][chack->position.x+1]= ')';
+	display_background[chack.position.y][chack.position.x]= '^';
+	display_background[chack.position.y][chack.position.x-1]= '(';
+	display_background[chack.position.y][chack.position.x+1]= ')';
 	send(dispid,1);
 }
 
 reduce_life(){
-	switch (chack->life){
+	switch (chack.life){
 		case 3: 
-			//write_string(0,6,652,"LIFE:2");
-			display_background[0][1] = 'L';
-			display_background[0][2] = 'I';
-			display_background[0][3] = 'F';
-			display_background[0][4] = 'E';
-			display_background[0][5] = ':';
-			display_background[0][6] = '2';
+			write_string(0,1,652,"LIFE:2");
 		break;
 		case 2:
-			display_background[0][1] = 'L';
-			display_background[0][2] = 'I';
-			display_background[0][3] = 'F';
-			display_background[0][4] = 'E';
-			display_background[0][5] = ':';
-			display_background[0][6] = '1';
+			write_string(0,1,652,"LIFE:1");
 		break;
 		case 1:
-			display_background[0][1] = 'L';
-			display_background[0][2] = 'I';
-			display_background[0][3] = 'F';
-			display_background[0][4] = 'E';
-			display_background[0][5] = ':';
-			display_background[0][6] = '0';
+			write_string(0,1,652,"LIFE:0");
 		break;
 		//add back to menu
 	}
@@ -435,20 +419,20 @@ reduce_life(){
 }
 
 void kill_chack(){
-	if((display_background_color[chack->position.y][chack->position.x] == GRANADE_SMOKE_COLOR || display_background_color[chack->position.y][chack->position.x+1] == GRANADE_SMOKE_COLOR || display_background_color[chack->position.y][chack->position.x-1] == GRANADE_SMOKE_COLOR || kill_monster==1)  && chack_alive==1){				//kill chack
+	if((display_background_color[chack.position.y][chack.position.x] == GRANADE_SMOKE_COLOR || display_background_color[chack.position.y][chack.position.x+1] == GRANADE_SMOKE_COLOR || display_background_color[chack.position.y][chack.position.x-1] == GRANADE_SMOKE_COLOR || kill_monster==1)  && chack_alive==1){				//kill chack
 				chack_alive=0;
-				display_background[chack->position.y][chack->position.x]= ' ';
-				display_background[chack->position.y][chack->position.x-1]= ' ';
-				display_background[chack->position.y][chack->position.x+1]= ' ';
+				display_background[chack.position.y][chack.position.x]= ' ';
+				display_background[chack.position.y][chack.position.x-1]= ' ';
+				display_background[chack.position.y][chack.position.x+1]= ' ';
 				kill_monster=0;					//cant be killed again by monster
 				display_background[3][4]= '^';//draw new chack
 				display_background[3][3]= '(';
 				display_background[3][5]= ')';
-				chack->position.y=3;	//save new cords
-				chack->position.x=4;
+				chack.position.y=3;	//save new cords
+				chack.position.x=4;
 				reduce_life();
 				send(dispid,1);
-				if(chack->life ==0){ //ggwp
+				if(chack.life ==0){ //ggwp
 					new_stage = 1;
 					kill_world=1;		//ggwp
 					write_string( 12,25,100,"GAME OVER RESTART AND TRY AGAIN" );
@@ -461,109 +445,109 @@ void kill_chack(){
 void moveChack(char side)
 {
 	int jumpCounter=0;
-	display_background[chack->position.y][chack->position.x]= ' ';
-	display_background[chack->position.y][chack->position.x-1]= ' ';
-	display_background[chack->position.y][chack->position.x+1]= ' ';
+	display_background[chack.position.y][chack.position.x]= ' ';
+	display_background[chack.position.y][chack.position.x-1]= ' ';
+	display_background[chack.position.y][chack.position.x+1]= ' ';
 	
 	switch (side)
 	{
 		case 'R'://move  right
-		if(display_background_color[chack->position.y][(chack->position.x+1)] != WALL_COLOR)//if its not green wall
+		if(display_background_color[chack.position.y][(chack.position.x+1)] != WALL_COLOR)//if its not green wall
 		{
-			chack->position.x = (chack->position.x+1)%80;
+			chack.position.x = (chack.position.x+1)%80;
 		}
-		else if(display_background_color[chack->position.y-1][(chack->position.x+1)] != WALL_COLOR && (display_background_color[chack->position.y-1][(chack->position.x)] != WALL_COLOR))//if he can climb the wall
+		else if(display_background_color[chack.position.y-1][(chack.position.x+1)] != WALL_COLOR && (display_background_color[chack.position.y-1][(chack.position.x)] != WALL_COLOR))//if he can climb the wall
 		{
-			display_background[chack->position.y][chack->position.x]= ' ';
-			display_background[chack->position.y][chack->position.x-1]= ' ';
-			display_background[chack->position.y][chack->position.x+1]= ' ';
-			chack->position.y = (chack->position.y-1)%80;
+			display_background[chack.position.y][chack.position.x]= ' ';
+			display_background[chack.position.y][chack.position.x-1]= ' ';
+			display_background[chack.position.y][chack.position.x+1]= ' ';
+			chack.position.y = (chack.position.y-1)%80;
 			drawChack();
 			sleept(1);
-			display_background[chack->position.y][chack->position.x]= ' ';
-			display_background[chack->position.y][chack->position.x-1]= ' ';
-			display_background[chack->position.y][chack->position.x+1]= ' ';
-			chack->position.x = (chack->position.x+1)%80;
+			display_background[chack.position.y][chack.position.x]= ' ';
+			display_background[chack.position.y][chack.position.x-1]= ' ';
+			display_background[chack.position.y][chack.position.x+1]= ' ';
+			chack.position.x = (chack.position.x+1)%80;
 			drawChack();
 		}
 
 		break;
 		case 'L'://move left
-		if(display_background_color[chack->position.y][(chack->position.x-1)] != WALL_COLOR)//if its not green wall
+		if(display_background_color[chack.position.y][(chack.position.x-1)] != WALL_COLOR)//if its not green wall
 		{
-			chack->position.x = (chack->position.x-1)%80;
+			chack.position.x = (chack.position.x-1)%80;
 		}
 		else
-			if(display_background_color[chack->position.y-1][(chack->position.x-1)] != WALL_COLOR && (display_background_color[chack->position.y-1][(chack->position.x)] != WALL_COLOR))//if he can climb the wall
+			if(display_background_color[chack.position.y-1][(chack.position.x-1)] != WALL_COLOR && (display_background_color[chack.position.y-1][(chack.position.x)] != WALL_COLOR))//if he can climb the wall
 		{
-			display_background[chack->position.y][chack->position.x]= ' ';
-			display_background[chack->position.y][chack->position.x-1]= ' ';
-			display_background[chack->position.y][chack->position.x+1]= ' ';
-			chack->position.y = (chack->position.y-1)%80;
+			display_background[chack.position.y][chack.position.x]= ' ';
+			display_background[chack.position.y][chack.position.x-1]= ' ';
+			display_background[chack.position.y][chack.position.x+1]= ' ';
+			chack.position.y = (chack.position.y-1)%80;
 			drawChack();
 			sleept(1);
-			display_background[chack->position.y][chack->position.x]= ' ';
-			display_background[chack->position.y][chack->position.x-1]= ' ';
-			display_background[chack->position.y][chack->position.x+1]= ' ';
-			chack->position.x = (chack->position.x-1)%80;
+			display_background[chack.position.y][chack.position.x]= ' ';
+			display_background[chack.position.y][chack.position.x-1]= ' ';
+			display_background[chack.position.y][chack.position.x+1]= ' ';
+			chack.position.x = (chack.position.x-1)%80;
 			drawChack();
 		}
 		break;
 		case 'U'://move up
 		jumpCounter =0;
-		while((display_background_color[chack->position.y-1][(chack->position.x)] != WALL_COLOR) && (jumpCounter<3))
+		while((display_background_color[chack.position.y-1][(chack.position.x)] != WALL_COLOR) && (jumpCounter<3))
 		{
-			display_background[chack->position.y][chack->position.x]= ' ';
-			display_background[chack->position.y][chack->position.x-1]= ' ';
-			display_background[chack->position.y][chack->position.x+1]= ' ';
-			chack->position.y = (chack->position.y-1)%25;
+			display_background[chack.position.y][chack.position.x]= ' ';
+			display_background[chack.position.y][chack.position.x-1]= ' ';
+			display_background[chack.position.y][chack.position.x+1]= ' ';
+			chack.position.y = (chack.position.y-1)%25;
 			jumpCounter++;
 			drawChack();
 			sleept(100);
 			
 		}
-		if(display_background_color[chack->position.y-1][(chack->position.x)] == WALL_COLOR){
-			chack->gravity=0;
+		if(display_background_color[chack.position.y-1][(chack.position.x)] == WALL_COLOR){
+			chack.gravity=0;
 		}
 		break;
 		case 'D'://move down
-		while((display_background_color[chack->position.y+1][(chack->position.x)]!= WALL_COLOR))//chack is falling
+		while((display_background_color[chack.position.y+1][(chack.position.x)]!= WALL_COLOR))//chack is falling
 	{
-		display_background[chack->position.y][chack->position.x]= ' ';
-		display_background[chack->position.y][chack->position.x-1]= ' ';
-		display_background[chack->position.y][chack->position.x+1]= ' ';
-		chack->position.y = (chack->position.y+1);
+		display_background[chack.position.y][chack.position.x]= ' ';
+		display_background[chack.position.y][chack.position.x-1]= ' ';
+		display_background[chack.position.y][chack.position.x+1]= ' ';
+		chack.position.y = (chack.position.y+1);
 		
 		drawChack();
 		sleept(100);
 	}
 	break;
 }
-	if((display_background_color[chack->position.y+1][(chack->position.x)] != WALL_COLOR))
+	if((display_background_color[chack.position.y+1][(chack.position.x)] != WALL_COLOR))
 	{
-		if( (display_background_color[chack->position.y-1][(chack->position.x)] == WALL_COLOR))
+		if( (display_background_color[chack.position.y-1][(chack.position.x)] == WALL_COLOR))
 		{
-		chack->gravity=0;
+		chack.gravity=0;
 		}
 		else
 		{
-		chack->gravity=1;
+		chack.gravity=1;
 		}	
 	
 	}
-	while((chack->gravity==1) && (display_background_color[chack->position.y+1][(chack->position.x)]!= WALL_COLOR))//chack is falling
+	while((chack.gravity==1) && (display_background_color[chack.position.y+1][(chack.position.x)]!= WALL_COLOR))//chack is falling
 	{
-		display_background[chack->position.y][chack->position.x]= ' ';
-		display_background[chack->position.y][chack->position.x-1]= ' ';
-		display_background[chack->position.y][chack->position.x+1]= ' ';
-		chack->position.y = (chack->position.y+1);
+		display_background[chack.position.y][chack.position.x]= ' ';
+		display_background[chack.position.y][chack.position.x-1]= ' ';
+		display_background[chack.position.y][chack.position.x+1]= ' ';
+		chack.position.y = (chack.position.y+1);
 		drawChack();
 		sleept(100);
 	}
 	chack_alive=1; //cant die if im not alive
 
 	kill_chack();
-	if (chack->position.y==23 && chack->position.x==79 ){		//check if stage is over
+	if (chack.position.y==23 && chack.position.x==79 ){		//check if stage is over
 		new_stage=1;											//kill monsters and chickens
 		current_stage++;										//advance to the next stage
 		send(stage_manager_pid, current_stage);
@@ -615,8 +599,8 @@ void throw_granade(int direction){
 	int flying_time = 10;	
 	int flying_tod = tod;
 	int granade_explode_timer = tod; // sleep 3 sec before exploding;
-	int temp_x = chack->position.x;
-	int temp_y = chack->position.y;
+	int temp_x = chack.position.x;
+	int temp_y = chack.position.y;
 
 	int y;
 	int x;
@@ -712,7 +696,7 @@ void moveMonster( MONSTER *monster)
 		case 'R'://move  right
 		if((display_background_color[monster->position.y][(monster->position.x+2)] != WALL_COLOR))
 		{
-			if(monster->position.x==chack->position.x && monster->position.y==chack->position.y){
+			if(monster->position.x==chack.position.x && monster->position.y==chack.position.y){
 				kill_monster=1;
 				kill_chack();
 				
@@ -746,7 +730,7 @@ void moveMonster( MONSTER *monster)
 		case 'L'://move left
 		if((display_background_color[monster->position.y][(monster->position.x-2)] != WALL_COLOR))
 		{
-			if(monster->position.x==chack->position.x && monster->position.y==chack->position.y){
+			if(monster->position.x==chack.position.x && monster->position.y==chack.position.y){
 				kill_monster=1;
 				kill_chack();
 				
@@ -779,7 +763,7 @@ void moveMonster( MONSTER *monster)
 		case 'U'://move up
 		if((display_background_color[monster->position.y-1][(monster->position.x)] != WALL_COLOR))
 		{
-			if(monster->position.x==chack->position.x && monster->position.y==chack->position.y){
+			if(monster->position.x==chack.position.x && monster->position.y==chack.position.y){
 				kill_monster=1;
 				kill_chack();
 				
@@ -811,7 +795,7 @@ void moveMonster( MONSTER *monster)
 		case 'D'://move down
 			if((display_background_color[monster->position.y+1][(monster->position.x)] != WALL_COLOR))
 		{
-			if(monster->position.x==chack->position.x && monster->position.y==chack->position.y){
+			if(monster->position.x==chack.position.x && monster->position.y==chack.position.y){
 				kill_monster=1;
 				kill_chack();
 				
@@ -1025,7 +1009,7 @@ void draw_chicken(CHICKEN *chicken_input){
 	int edge_needed_right =0;
 	int hole_size = 5;
 	int number_of_hearts = 3;
-	
+	char str[2];
 		for(i = 0; i < 25; i++ )
 		{
 			for(j = 0; j < 80; j++)
@@ -1054,45 +1038,41 @@ void draw_chicken(CHICKEN *chicken_input){
 				else{
 					display_background_color[i][j] = EMPTY_SPACE;
 			}
-				if (j == 79 && i%4 == 0){ // make stage 1 patterns (shti va erev)
-					edge_needed_left = 1 - edge_needed_left;
-					edge_needed_right = 1- edge_needed_right;
-				}
+			if (j == 79 && i%4 == 0){ // make stage 1 patterns (shti va erev)
+				edge_needed_left = 1 - edge_needed_left;
+				edge_needed_right = 1- edge_needed_right;
 			}
-
-			// Print stage hearts.
-			// by the function: pos = 2*(i*80 + j);
-			// heart 1
-			display_background[7][9] = '<';
-			display_background_color[7][9] = WALL_COLOR;
-			display_background[7][10] = 'B';
-			display_background_color[7][10] = WALL_COLOR;
-
-			// heart 2
-			display_background[15][55] = '<';
-			display_background_color[15][55] = HEARTCOLLOR;
-			
-			display_background[15][56] = 'B';
-			display_background_color[15][56] = HEARTCOLLOR;
-			
-			// heart 3
-			display_background[19][9] = '<';
-			display_background_color[19][9] = HEARTCOLLOR;
-			
-			display_background[19][10] = 'B';
-			display_background_color[19][10] = HEARTCOLLOR;
-	
-			display_background[0][1] = 'L';
-			display_background[0][2] = 'I';
-			display_background[0][3] = 'F';
-			display_background[0][4] = 'E';
-			display_background[0][5] = ':';
-			display_background[0][6] = '3';
-			
-			
-			drawChack();
 		}
-		send(dispid,1);
+
+		// Print stage hearts.
+		// by the function: pos = 2*(i*80 + j);
+		// heart 1
+		display_background[7][9] = '<';
+		display_background_color[7][9] = WALL_COLOR;
+		display_background[7][10] = 'B';
+		display_background_color[7][10] = WALL_COLOR;
+
+		// heart 2
+		display_background[15][55] = '<';
+		display_background_color[15][55] = HEARTCOLLOR;
+			
+		display_background[15][56] = 'B';
+		display_background_color[15][56] = HEARTCOLLOR;
+			
+		// heart 3
+		display_background[19][9] = '<';
+		display_background_color[19][9] = HEARTCOLLOR;
+			
+		display_background[19][10] = 'B';
+		display_background_color[19][10] = HEARTCOLLOR;
+			
+		//sprintf(str, "LIFE:%d", chack.life);
+		//write_string(0,1,652,str);
+			
+			
+		drawChack();
+	}
+	send(dispid,1);
  }
 
  /*------------------------------------------------------------------------
@@ -1234,12 +1214,6 @@ void draw_chicken(CHICKEN *chicken_input){
 			display_background[21][10] = 'B';
 			display_background_color[21][10] = HEARTCOLLOR;
 			
-			display_background[0][1] = 'L';
-			display_background[0][2] = 'I';
-			display_background[0][3] = 'F';
-			display_background[0][4] = 'E';
-			display_background[0][5] = ':';
-			display_background[0][6] = '3';
 			
 			drawChack();
 		}
@@ -1384,12 +1358,8 @@ void draw_chicken(CHICKEN *chicken_input){
 			display_background[21][10] = 'B';
 			display_background_color[21][10] = HEARTCOLLOR;
 			
-			display_background[0][1] = 'L';
-			display_background[0][2] = 'I';
-			display_background[0][3] = 'F';
-			display_background[0][4] = 'E';
-			display_background[0][5] = ':';
-			display_background[0][6] = '3';
+
+			
 			
 			drawChack();
 		}
@@ -1484,8 +1454,8 @@ void stage_3_platform2(){
  }
 
 void stage_0(){//menu stage
-	chack->position.x=2;
-	chack->position.y=2;
+	chack.position.x=2;
+	chack.position.y=2;
 	print_stage_0();	// print stage on the screen
 }
   void stage_1(){
@@ -1495,8 +1465,8 @@ void stage_0(){//menu stage
 	int chicken_pid;
 	MONSTER *m;
 	POSITION *monsterPosition;
-	chack->position.x=2;
-	chack->position.y=2;
+	chack.position.x=2;
+	chack.position.y=2;
 	print_stage_1();	// print stage on the screen
 	 
 	 // initiate chicken.
@@ -1516,8 +1486,8 @@ void stage_2(){
 	int chicken_pid;
 	MONSTER *m;
 	POSITION *monsterPosition;
-	chack->position.x=2;
-	chack->position.y=2;
+	chack.position.x=2;
+	chack.position.y=2;
 	print_stage_2();	// print stage on the screen
 	 
 	 // initiate chicken.
@@ -1539,8 +1509,8 @@ void stage_3(){
 	int chicken_pid;
 	MONSTER *m;
 	POSITION *monsterPosition;
-	chack->position.x=2;
-	chack->position.y=2;
+	chack.position.x=2;
+	chack.position.y=2;
 	print_stage_3();	// print stage on the screen
 	 
 	 // initiate chicken.
@@ -1738,12 +1708,10 @@ void sound()
 {
 	int i;
 	int chords[]={g3,quarter_note,c4,quarter_note_dot,h3,eighth_note,c4,quarter_note,e4,quarter_note,d4,quarter_note_dot,c4,eighth_note,d4,quarter_note,e4,eighth_note,d4,eighth_note,c4,quarter_note,c4,quarter_note,e4,quarter_note,g4,quarter_note,a4,half_note_dot,a4,quarter_note,g4,quarter_note_dot,e4,eighth_note,e4,quarter_note,c4,quarter_note,d4,quarter_note_dot,c4,eighth_note,d4,quarter_note,e4,eighth_note,d4,eighth_note,c4,quarter_note_dot,a3,eighth_note,a3,quarter_note,g3,quarter_note,c4,half_note_dot,a4,quarter_note,g4,quarter_note_dot,e4,eighth_note,e4,quarter_note,c4,quarter_note,d4,quarter_note_dot,c4,eighth_note,d4,quarter_note,a4,quarter_note,g4,quarter_note_dot,e4,eighth_note,e4,quarter_note,g4,quarter_note,a4,half_note_dot,a4,quarter_note,g4,quarter_note_dot,e4,eighth_note,e4,quarter_note,c4,quarter_note,d4,quarter_note_dot,c4,eighth_note,d4,quarter_note,e4,eighth_note,d4,eighth_note,c4,quarter_note_dot,a3,eighth_note,a3,quarter_note,g3,quarter_note,c4,half_note_dot};
-	//while (1)
-	{
-		for(i=0;i<=110;i+=2)
-		{
+	
+	while (1){
+		for(i=0;i<=110;i+=2){
 		Sound(chords[i]/40);
-		//sleept(400);
 		sleept(chords[i+1]);
 		}
 	}
@@ -1751,7 +1719,7 @@ void sound()
 	return(0);
 }
 
-
+/*
 int sched_arr_pid[10] = {-1};
 int sched_arr_int[10] = {-1};
 
@@ -1762,7 +1730,7 @@ SYSCALL schedule(int no_of_pids, int cycle_length, int pid1, ...){
 		no_of_pids: int, number of input pids.
 		cycle_length: int, how many ticks itll take to finnish a cycle.
 		pid1: int, a pid.
-	*/
+	
 	int i;
 	int ps;
 	int *iptr;
@@ -1784,7 +1752,7 @@ SYSCALL schedule(int no_of_pids, int cycle_length, int pid1, ...){
 	restore(ps);
 
 } // schedule 
-
+*/
 
 xmain()
 {
@@ -1812,10 +1780,10 @@ xmain()
 	chackPosition->y=2;
 
 
-	chack->name = test;
-	chack->position=*chackPosition;
-	chack->life = NUMOFLIFES;
-	chack->gravity=1;
+	chack.name = test;
+	chack.position=*chackPosition;
+	chack.life = NUMOFLIFES;
+	chack.gravity=1;
 		
-    schedule(7,1000, dispid, 0,  uppid, 1000, stage_manager_pid, 6000, stage_0_pid, 9000);//, stage_1_pid, 120, stage_2_pid, 150, stage_3_pid, 180);
+    //schedule(7,100, dispid, 1,  uppid, 30, stage_manager_pid, 60, stage_0_pid, 90);//, stage_1_pid, 120, stage_2_pid, 150, stage_3_pid, 180);
 } // xmain	
