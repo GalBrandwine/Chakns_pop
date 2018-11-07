@@ -126,13 +126,13 @@ Current stage parameters:
 int current_stage = 0;
 int displayer_sem = 1;
 
-int (*old9newisr)(int);
-int uppid, dispid, recvpid, stage_manager_pid, stage_0_pid, stage_1_pid, stage_2_pid, stage_3_pid, platform_3_pid, platform_2_pid,sound_id,pause_pid,gameover_pid;
+int(*old9newisr)(int);
+int uppid, dispid, recvpid, stage_manager_pid, stage_0_pid, stage_1_pid, stage_2_pid, stage_3_pid, platform_3_pid, platform_2_pid, sound_id, pause_pid, gameover_pid;
 volatile int global_flag;
-volatile int global_timer =0 ;
+volatile int global_timer = 0;
 
-void interrupt (*old0x70isr)(void);
-void platform(int min,int max,int hight,int movment, int left,int my_num);					//general platform function
+void interrupt(*old0x70isr)(void);
+void platform(int min, int max, int hight, int movment, int left, int my_num);					//general platform function
 
 void stage_3_platform();		// platform 3 proc
 void stage_2_platform();		// platform 2 proc 
@@ -150,26 +150,26 @@ int gno_of_pids;
 int timer;		// for use in ckint		to count 30 sec/5 min
 int timer_on;	//for use in clkint
 
-int new_stage =0;					//kill button for monsters and chickens
+int new_stage = 0;					//kill button for monsters and chickens
 int chack_alive = 1;				//chack can die if its 1
 int kill_world = 0;					//shutdown
 int kill_monster = 0;				//monster killed chak?
 int chicken_pid;
 int eggs_layed;
 int max_enemies[MAX_ENEMIES];
-int invincible=0;
+int invincible = 0;
 int monstersKilled;
-volatile int pause_on=0;			//on when the gamepauses
-int pdidntletgo=0;					//to prevent holding the p button without letting go for pause after pause
-int gameover_on=0; //flag for game ending by timout
-int game_won=0; // flag for wining the game
-int stage2plat=0;		// 1 when the platform is alive 0 otherwise	
-int stage3plat=0;		// same
+volatile int pause_on = 0;			//on when the gamepauses
+int pdidntletgo = 0;					//to prevent holding the p button without letting go for pause after pause
+int gameover_on = 0; //flag for game ending by timout
+int game_won = 0; // flag for wining the game
+int stage2plat = 0;		// 1 when the platform is alive 0 otherwise	
+int stage3plat = 0;		// same
 
-/*------------------------------------------------------------------------
-*  Latch  --  for changing game speed.
-*------------------------------------------------------------------------
-*/
+						/*------------------------------------------------------------------------
+						*  Latch  --  for changing game speed.
+						*------------------------------------------------------------------------
+						*/
 void setLatch(int latch)
 {
 	asm{
@@ -215,14 +215,14 @@ INTPROC new_int9(int mdevno)
 				INT              10h// Adapter initialized.Page 0 displayed
 				INT 27
 			}
-    } // if
-	else if( scan == 25 && pdidntletgo==0){	//p was pressed pause the game
-		pdidntletgo=1;
-		pause_on=1-pause_on;	// tp pause or release
+		} // if
+		else if (scan == 25 && pdidntletgo == 0) {	//p was pressed pause the game
+			pdidntletgo = 1;
+			pause_on = 1 - pause_on;	// tp pause or release
 
-	}
-	else if ( scan == 153){
-			pdidntletgo=0;
+		}
+		else if (scan == 153) {
+			pdidntletgo = 0;
 		} // if
 		else if ((scan == 2) && (ctrl_pressed == 1)) // Control-C?
 			send(butlerpid, MSGPSNAP);
@@ -418,7 +418,7 @@ reduce_life() {
 void kill_chack() {
 	if (invincible == 0)// chack is invincible for 30 seconds if grenade kill 2 monsters
 	{
-		if ((display_background_color[chack.position.y][chack.position.x] == GRANADE_SMOKE_COLOR || kill_monster == 1 || display_background_color[chack.position.y][chack.position.x]==MONSTER_COLOR) && chack_alive == 1) {				//kill chack
+		if ((display_background_color[chack.position.y][chack.position.x] == GRANADE_SMOKE_COLOR || kill_monster == 1 || display_background_color[chack.position.y][chack.position.x] == MONSTER_COLOR) && chack_alive == 1) {				//kill chack
 			chack_alive = 0;
 			if (display_background_color[chack.position.y][chack.position.x] == GRANADE_SMOKE_COLOR)
 			{
@@ -700,7 +700,6 @@ void throw_granade(int direction) {
 			break;
 		}
 	}
-
 	wait(displayer_sem);
 	// Fall until granade hit breen ground.
 	while (display_background_color[temp_y + 1][temp_x] != 40) {
@@ -742,7 +741,6 @@ void throw_granade(int direction) {
 	if (display_background_color[temp_y][temp_x - 2] == HEARTCOLLOR || display_background_color[temp_y][temp_x + 2] == HEARTCOLLOR) {
 		free_heart(y, temp_y, x, temp_x);
 	}
-
 	monstersKilled = 0;
 	wait(displayer_sem);
 	display_background_color[temp_y][temp_x - 2] = GRANADE_SMOKE_COLOR;
@@ -751,7 +749,6 @@ void throw_granade(int direction) {
 	display_background[temp_y][temp_x + 1] = ' ';
 	display_background[temp_y][temp_x - 1] = ' ';
 	signal(displayer_sem);
-	
 	// Reset granade_explode_timer timer;
 	granade_explode_timer = tod;
 	grenade_sound();
@@ -775,7 +772,7 @@ void throw_granade(int direction) {
 	display_background_color[temp_y][temp_x - 2] = EMPTY_SPACE;
 	display_background_color[temp_y][temp_x + 2] = EMPTY_SPACE;
 	signal(displayer_sem);
-	
+
 }
 
 
@@ -785,8 +782,8 @@ void throw_granade(int direction) {
 */
 void moveMonster(MONSTER *monster)
 {
-	
-	
+
+
 	int newDirection;
 	sleept(50);
 	switch (monster->direction)
@@ -809,9 +806,9 @@ void moveMonster(MONSTER *monster)
 
 			monster->oldPosition.y = monster->position.y;
 			monster->oldPosition.x = monster->position.x;
-			
+
 			monster->position.x = (monster->position.x + 1) % 80;
-			
+
 
 
 		}
@@ -829,8 +826,16 @@ void moveMonster(MONSTER *monster)
 
 			}
 			wait(displayer_sem);
-			display_background[monster->position.y][monster->position.x] = monster->oldChar;
-			display_background_color[monster->position.y][monster->position.x] = monster->oldAttribute;
+			if (monster->oldAttribute == MONSTER_COLOR)
+			{
+				display_background[monster->position.y][monster->position.x] =' ';
+				display_background_color[monster->position.y][monster->position.x] =EMPTY_SPACE;
+			}
+			else
+			{
+				display_background[monster->position.y][monster->position.x] = monster->oldChar;
+				display_background_color[monster->position.y][monster->position.x] = monster->oldAttribute;
+			}
 			signal(displayer_sem);
 			monster->oldAttribute = display_background_color[monster->position.y][monster->position.x - 1];
 			monster->oldChar = display_background[monster->position.y][monster->position.x - 1];
@@ -838,9 +843,9 @@ void moveMonster(MONSTER *monster)
 			monster->oldPosition.y = monster->position.y;
 			monster->oldPosition.x = monster->position.x;
 
-		
+
 			monster->position.x = (monster->position.x - 1) % 80;
-			
+
 
 		}
 		else
@@ -870,7 +875,7 @@ void moveMonster(MONSTER *monster)
 			signal(displayer_sem);
 			monster->position.y = (monster->position.y - 1) % 25;
 
-			
+
 		}
 		else
 		{
@@ -898,7 +903,7 @@ void moveMonster(MONSTER *monster)
 
 			monster->position.y = (monster->position.y + 1) % 25;
 
-			
+
 		}
 		else
 		{
@@ -917,7 +922,7 @@ void drawMonster(MONSTER *monster)
 	int my_stage = current_stage;
 	while (1)
 	{
-		if ( (current_stage == 2) && (abs(tod - changeSpeedIndicator) >= 60000))//in stage two every minute the monster speed will increase by 20%
+		if ((current_stage == 2) && (abs(tod - changeSpeedIndicator) >= 60000))//in stage two every minute the monster speed will increase cy 20%
 		{
 			moveFrequency = moveFrequency * 83 / 100;
 			changeSpeedIndicator = tod;
@@ -939,7 +944,7 @@ void drawMonster(MONSTER *monster)
 				monstersKilled++;
 				kill(getpid());
 			}
-			if (new_stage == 1 || current_stage != my_stage ) {	
+			if (new_stage == 1 || current_stage != my_stage) {
 				write_string(monster->position.y, monster->position.x, EMPTY_SPACE, " ");
 				kill(getpid());
 			}
@@ -1308,11 +1313,11 @@ void print_stage_2() {
 		sprintf(str, "LIFE:%d", chack.life);
 		write_string(0, 1, WALL_COLOR, str);
 
-			drawChack();
-		}
-		send(dispid,1);
-		resume( platform_2_pid = create(stage_2_platform, INITSTK, INITPRIO, "STAGE2PLAT2", 0) );
- }
+		drawChack();
+	}
+	send(dispid, 1);
+	resume(platform_2_pid = create(stage_2_platform, INITSTK, INITPRIO, "STAGE2PLAT2", 0));
+}
 
 
 /*------------------------------------------------------------------------
@@ -1443,30 +1448,30 @@ void print_stage_3() {
 		// heart 3
 		write_string(21, 9, HEARTCOLLOR, "<B");
 
-			sprintf(str, "LIFE:%d", chack.life);
-			write_string(0,1,652,str);
-			
-			
-			drawChack();
-		}
-		signal(displayer_sem);
-		send(dispid,1);
-		resume( platform_3_pid = create(stage_3_platform, INITSTK, INITPRIO, "STAGE3PLAT1", 0) );
-		
- }
+		sprintf(str, "LIFE:%d", chack.life);
+		write_string(0, 1, 652, str);
 
 
-void platform(int min,int max,int hight,int movment,int left,int my_num){	//comments below
+		drawChack();
+	}
+	signal(displayer_sem);
+	send(dispid, 1);
+	resume(platform_3_pid = create(stage_3_platform, INITSTK, INITPRIO, "STAGE3PLAT1", 0));
+
+}
+
+
+void platform(int min, int max, int hight, int movment, int left, int my_num) {	//comments below
 	int plat_tod;
 	int go_back = left;
 	int max_mov = 0;
 	plat_tod = tod;
 
-	if (left == 1){
+	if (left == 1) {
 		max_mov = movment;
 	}
 	while (1) {
-		if((stage2plat==0 && my_num==2) ||(stage3plat==0 && my_num==3) || (chack.life==0)){	// the platform will die naturally
+		if ((stage2plat == 0 && my_num == 2) || (stage3plat == 0 && my_num == 3) || (chack.life == 0)) {	// the platform will die naturally
 			return;
 		}
 		if (abs(tod - plat_tod) >= 1000) {
@@ -1499,35 +1504,35 @@ void platform(int min,int max,int hight,int movment,int left,int my_num){	//comm
 			plat_tod = tod;
 			send(dispid, 1);
 		}
-	} 
-}
-
-
- void stage_3_platform(){	//min==1 max==19 hight 18 movment 5
-		int min =1;			//start of platform
-		int max = 20;		// end of platform
-		int hight = 18;		// y value of platform
-		int movment = 5;	// num of movments the platform will do
-		int left = 0 ;		// intial direction of the platform
-		int my_num = 3;		// which stage i belong to
-		stage3plat=1;		//platform is live
-		platform(min,max,hight,movment,left,my_num);
-		kill(getpid());//because the func ended, platform needs 2 die so it will end naturally
-
-}
-
-
-void stage_2_platform(){	
-		int min =30;
-		int max = 78;
-		int hight = 10;
-		int movment = 7;
-		int left = 1;
-		int my_num = 2;
-		stage2plat=1;
-		platform(min,max,hight,movment,left,my_num);
-		kill(getpid());//because the func ended, platform needs 2 die so it will end naturally
 	}
+}
+
+
+void stage_3_platform() {	//min==1 max==19 hight 18 movment 5
+	int min = 1;			//start of platform
+	int max = 20;		// end of platform
+	int hight = 18;		// y value of platform
+	int movment = 5;	// num of movments the platform will do
+	int left = 0;		// intial direction of the platform
+	int my_num = 3;		// which stage i belong to
+	stage3plat = 1;		//platform is live
+	platform(min, max, hight, movment, left, my_num);
+	kill(getpid());//because the func ended, platform needs 2 die so it will end naturally
+
+}
+
+
+void stage_2_platform() {
+	int min = 30;
+	int max = 78;
+	int hight = 10;
+	int movment = 7;
+	int left = 1;
+	int my_num = 2;
+	stage2plat = 1;
+	platform(min, max, hight, movment, left, my_num);
+	kill(getpid());//because the func ended, platform needs 2 die so it will end naturally
+}
 
 
 /*------------------------------------------------------------------------
@@ -1582,9 +1587,9 @@ void stage_1() {
 	chicken->position = *chickenPosition;
 	chicken->level = 1;
 	new_stage = 0; //reset
-	timer_on =1;	//Reset	because we started a new stage, count 5 min from this moment.
+	timer_on = 1;	//Reset	because we started a new stage, count 5 min from this moment.
 	timer = 0;		//reset
-	resume( chicken_pid = create(draw_chicken, INITSTK, INITPRIO, "CHICKEN_DRAWER", 1, chicken) );
+	resume(chicken_pid = create(draw_chicken, INITSTK, INITPRIO, "CHICKEN_DRAWER", 1, chicken));
 }
 
 
@@ -1606,7 +1611,7 @@ void stage_2() {
 	chicken->position = *chickenPosition;
 	chicken->level = 2;
 	new_stage = 0; //reset
-	timer_on =1;	//Reset	because we started a new stage, count 5 min from this moment.
+	timer_on = 1;	//Reset	because we started a new stage, count 5 min from this moment.
 	timer = 0;		//reset
 
 	resume(chicken_pid = create(draw_chicken, INITSTK, INITPRIO, "CHICKEN_DRAWER", 1, chicken));
@@ -1631,9 +1636,9 @@ void stage_3() {
 	chicken->position = *chickenPosition;
 	chicken->level = 3;
 	new_stage = 0; //reset
-	timer_on =1;	//Reset	because we started a new stage, count 5 min from this moment.
+	timer_on = 1;	//Reset	because we started a new stage, count 5 min from this moment.
 	timer = 0;		//reset
-	resume( chicken_pid = create(draw_chicken, INITSTK, INITPRIO, "CHICKEN_DRAWER", 1, chicken) );
+	resume(chicken_pid = create(draw_chicken, INITSTK, INITPRIO, "CHICKEN_DRAWER", 1, chicken));
 }
 
 
@@ -1652,65 +1657,65 @@ void stage_manager() {
 			resume(stage_2_pid);
 			break;
 		case 3://	activate stage 3
-			stage2plat=0;		//	kills stage 2 platform
-			resume( stage_3_pid);
+			stage2plat = 0;		//	kills stage 2 platform
+			resume(stage_3_pid);
 			break;
 		case 4: //you won the Game
-			stage3plat=0;	//kills stage 3 platform
-			game_won=1;
+			stage3plat = 0;	//kills stage 3 platform
+			game_won = 1;
 			break;
 		}
 	}
 }
-void gameover(){				//busy wait end of game
+void gameover() {				//busy wait end of game
 	ChangeSpeaker(OFF);
-	
-	while(1){
-	}		
+
+	while (1) {
+	}
 }
- 
-void displayer( void ){	
+
+void displayer(void) {
 	//This process display the matrix, receive message (and return to ready) with every change in the screen matrix
 	int i, j, pos;
 	while (1)
-         {
-               receive();
-			   wait(displayer_sem);
-				   if(timer_on>300){		//5 min have passed
-					gameover_on=1;
-					write_string(11, 25, 100,"________________________________");		//save end game msg on array
-					write_string(12, 25, 100, "YOUR TIME IS OVER RESTART AND TRY AGAIN");
-					write_string(13, 25, 100,"________________________________");
-				}
-					if(game_won==1){
-						gameover_on=1;
-					write_string(11, 25, 100,"________________________________");		//save end game msg on array
-					write_string(12, 25, 100, "YOU WON THE GAME! YAY RESTART TO TRY AGAIN");
-					write_string(13, 25, 100,"________________________________");
-					
-					}
-			   for(i=0;i<25;i++)
-			   {
-				   for(j=0;j<80;j++)
-				   {
-					   pos = 2*(i*80 + j);
-					   drawInPosL(pos,display_background[i][j],display_background_color[i][j]);	// display the whole screen
-				   }
-			   }
-			   if(gameover_on==1){		
-					resume(gameover_pid = create(gameover, INITSTK, INITPRIO+2, "TIMEOUT", 0) ); // busy wait process gameover
-				}
-			   signal(displayer_sem);
-         } //while
+	{
+		receive();
+		wait(displayer_sem);
+		if (timer_on>300) {		//5 min have passed
+			gameover_on = 1;
+			write_string(11, 25, 100, "________________________________");		//save end game msg on array
+			write_string(12, 25, 100, "YOUR TIME IS OVER RESTART AND TRY AGAIN");
+			write_string(13, 25, 100, "________________________________");
+		}
+		if (game_won == 1) {
+			gameover_on = 1;
+			write_string(11, 25, 100, "________________________________");		//save end game msg on array
+			write_string(12, 25, 100, "YOU WON THE GAME! YAY RESTART TO TRY AGAIN");
+			write_string(13, 25, 100, "________________________________");
+
+		}
+		for (i = 0; i<25; i++)
+		{
+			for (j = 0; j<80; j++)
+			{
+				pos = 2 * (i * 80 + j);
+				drawInPosL(pos, display_background[i][j], display_background_color[i][j]);	// display the whole screen
+			}
+		}
+		if (gameover_on == 1) {
+			resume(gameover_pid = create(gameover, INITSTK, INITPRIO + 2, "TIMEOUT", 0)); // busy wait process gameover
+		}
+		signal(displayer_sem);
+	} //while
 } // prntr
 
 
 
-void pauseinit(){
+void pauseinit() {
 	ChangeSpeaker(OFF);
-	
-	while(1){
-		if(pause_on==0)	//p was pressed again, we need to kill the pasue
+
+	while (1) {
+		if (pause_on == 0)	//p was pressed again, we need to kill the pasue
 			break;
 	}
 	ChangeSpeaker(ON);
@@ -1738,10 +1743,10 @@ void updateter()
 		}
 		else if ((scan == 25)) // 'P' pressed
 		{
-			resume(pause_pid = create(pauseinit, INITSTK, INITPRIO+1, "pause", 0) ); // busy wait process pausing all other processes
+			resume(pause_pid = create(pauseinit, INITSTK, INITPRIO + 1, "pause", 0)); // busy wait process pausing all other processes
 		}
-		
-		else if (scan == 18 && display_background_color[chack.position.y][chack.position.x +1 ] != WALL_COLOR &&  display_background_color[chack.position.y][chack.position.x +2 ] != WALL_COLOR)	// 'E' pressed
+
+		else if (scan == 18 && display_background_color[chack.position.y][chack.position.x + 1] != WALL_COLOR &&  display_background_color[chack.position.y][chack.position.x + 2] != WALL_COLOR)	// 'E' pressed
 		{
 			resume(create(throw_granade, INITSTK, INITPRIO, "Granade", 1, 0)); // Throw granade right.
 		}
