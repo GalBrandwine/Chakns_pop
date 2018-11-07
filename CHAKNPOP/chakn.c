@@ -116,6 +116,7 @@ extern struct intmap far *sys_imp;
 #define CHACK_COLOR_UPSIDE 30
 #define GRANADE_SMOKE_COLOR 70
 #define nextLevel 80
+
 /*
 Current stage parameters:
 0 - menu,
@@ -156,6 +157,7 @@ int kill_world = 0;					//shutdown
 int kill_monster = 0;				//monster killed chak?
 int chicken_pid;
 int eggs_layed;
+int granade_throwen = 0;
 int max_enemies[MAX_ENEMIES];
 int invincible=0;
 int monstersKilled;
@@ -776,6 +778,8 @@ void throw_granade(int direction) {
 	display_background_color[temp_y][temp_x + 2] = EMPTY_SPACE;
 	signal(displayer_sem);
 	
+	//set granade_throwen to False, because a granade has been thrown and died.
+	granade_throwen = 0;
 }
 
 
@@ -1005,6 +1009,7 @@ void lay_egg(int init_egg_laying_position_y, int init_egg_laying_position_x) {
 	}
 
 	sleept(hatch_timer);
+
 	signal(displayer_sem);
 	monsterPosition.x = temp_x;
 	monsterPosition.y = temp_y;
@@ -1741,12 +1746,14 @@ void updateter()
 			resume(pause_pid = create(pauseinit, INITSTK, INITPRIO+1, "pause", 0) ); // busy wait process pausing all other processes
 		}
 		
-		else if (scan == 18 && display_background_color[chack.position.y][chack.position.x +1 ] != WALL_COLOR &&  display_background_color[chack.position.y][chack.position.x +2 ] != WALL_COLOR)	// 'E' pressed
+		else if (scan == 18 && granade_throwen == 0 && display_background_color[chack.position.y][chack.position.x +1 ] != WALL_COLOR &&  display_background_color[chack.position.y][chack.position.x +2 ] != WALL_COLOR)	// 'E' pressed
 		{
+			granade_throwen = 1;	
 			resume(create(throw_granade, INITSTK, INITPRIO, "Granade", 1, 0)); // Throw granade right.
 		}
-		else if (scan == 16 && display_background_color[chack.position.y][chack.position.x - 1] != WALL_COLOR && display_background_color[chack.position.y][chack.position.x - 2] != WALL_COLOR)	// 'Q' pressed
+		else if (scan == 16 && granade_throwen == 0 && display_background_color[chack.position.y][chack.position.x - 1] != WALL_COLOR && display_background_color[chack.position.y][chack.position.x - 2] != WALL_COLOR)	// 'Q' pressed
 		{
+		granade_throwen = 1;
 			resume(create(throw_granade, INITSTK, INITPRIO, "Granade", 1, 1)); // Throw granade left.
 		}
 		else if (scan == 0x1C && current_stage == 0) {
