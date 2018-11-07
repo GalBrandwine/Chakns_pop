@@ -700,6 +700,7 @@ void throw_granade(int direction) {
 			break;
 		}
 	}
+
 	wait(displayer_sem);
 	// Fall until granade hit breen ground.
 	while (display_background_color[temp_y + 1][temp_x] != 40) {
@@ -712,11 +713,11 @@ void throw_granade(int direction) {
 	display_background[temp_y][temp_x + 1] = '>';
 	display_background[temp_y][temp_x - 1] = '<';
 
-	// Check if theres wallcolor on the right
+	// Check if there's wallcolor on the right
 	if(display_background_color[temp_y][temp_x + 1] == WALL_COLOR)wall_dis_1_flag_right = 1;
 	if(display_background_color[temp_y][temp_x + 2] == WALL_COLOR)wall_dis_2_flag_right = 1;
 
-	// Check if theres wallcolor on the left
+	// Check if there's wallcolor on the left
 	if(display_background_color[temp_y][temp_x - 1] == WALL_COLOR)wall_dis_1_flag_left = 1;
 	if(display_background_color[temp_y][temp_x - 2] == WALL_COLOR)wall_dis_2_flag_left = 1;
 
@@ -916,7 +917,7 @@ void drawMonster(MONSTER *monster)
 	int my_stage = current_stage;
 	while (1)
 	{
-		if ( (current_stage == 2) && (abs(tod - changeSpeedIndicator) >= 60000))//in stage two every minute the monster speed will increase cy 20%
+		if ( (current_stage == 2) && (abs(tod - changeSpeedIndicator) >= 60000))//in stage two every minute the monster speed will increase by 20%
 		{
 			moveFrequency = moveFrequency * 83 / 100;
 			changeSpeedIndicator = tod;
@@ -943,6 +944,7 @@ void drawMonster(MONSTER *monster)
 				kill(getpid());
 			}
 
+			// draw a monster to graphic_array
 			write_string(monster->position.y, monster->position.x, MONSTER_COLOR, "M");
 
 			send(dispid, 1);
@@ -963,6 +965,7 @@ void lay_egg(int init_egg_laying_position_y, int init_egg_laying_position_x) {
 	int speed_tod = tod;
 	int temp_x = init_egg_laying_position_x;
 	int temp_y = init_egg_laying_position_y;
+	int hatch_timer = 10000;
 	MONSTER m;
 
 	POSITION monsterPosition;
@@ -1000,6 +1003,8 @@ void lay_egg(int init_egg_laying_position_y, int init_egg_laying_position_x) {
 		temp_y++;
 		display_background[temp_y][temp_x] = '*';
 	}
+
+	sleept(hatch_timer);
 	signal(displayer_sem);
 	monsterPosition.x = temp_x;
 	monsterPosition.y = temp_y;
