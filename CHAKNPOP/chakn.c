@@ -116,7 +116,6 @@ extern struct intmap far *sys_imp;
 #define CHACK_COLOR_UPSIDE 30
 #define GRANADE_SMOKE_COLOR 70
 #define nextLevel 80
-
 /*
 Current stage parameters:
 0 - menu,
@@ -737,6 +736,7 @@ void throw_granade(int direction) {
 				free_heart(y, temp_y, x, temp_x);
 			}
 			display_background_color[temp_y - y][temp_x + x] = GRANADE_SMOKE_COLOR;
+			display_background[temp_y - y][temp_x + x] =' ';
 		}
 	}
 
@@ -774,13 +774,10 @@ void throw_granade(int direction) {
 	display_background_color[temp_y][temp_x - 2] = EMPTY_SPACE;
 	display_background_color[temp_y][temp_x + 2] = EMPTY_SPACE;
 	signal(displayer_sem);
-<<<<<<< HEAD
+
 	
 	//set granade_throwen to False, because a granade has been thrown and died.
 	granade_throwen = 0;
-=======
-
->>>>>>> fac3d8cf88e0f4020ea6b7899c50602ea76c1e45
 }
 
 
@@ -805,8 +802,16 @@ void moveMonster(MONSTER *monster)
 
 			}
 			wait(displayer_sem);
-			display_background[monster->position.y][monster->position.x] = monster->oldChar;
-			display_background_color[monster->position.y][monster->position.x] = monster->oldAttribute;
+			if (monster->oldAttribute == MONSTER_COLOR)//if the monster is over other monster
+			{
+				display_background[monster->position.y][monster->position.x] = ' ';
+				display_background_color[monster->position.y][monster->position.x] = EMPTY_SPACE;
+			}
+			else
+			{
+				display_background[monster->position.y][monster->position.x] = monster->oldChar;
+				display_background_color[monster->position.y][monster->position.x] = monster->oldAttribute;
+			}
 			signal(displayer_sem);
 			monster->oldAttribute = display_background_color[monster->position.y][monster->position.x + 1];
 			monster->oldChar = display_background[monster->position.y][monster->position.x + 1];
@@ -834,7 +839,7 @@ void moveMonster(MONSTER *monster)
 
 			}
 			wait(displayer_sem);
-			if (monster->oldAttribute == MONSTER_COLOR)
+			if (monster->oldAttribute == MONSTER_COLOR)//if the monster is over other monster
 			{
 				display_background[monster->position.y][monster->position.x] =' ';
 				display_background_color[monster->position.y][monster->position.x] =EMPTY_SPACE;
@@ -878,8 +883,17 @@ void moveMonster(MONSTER *monster)
 			monster->oldPosition.x = monster->position.x;
 
 			wait(displayer_sem);
-			display_background[monster->oldPosition.y][monster->oldPosition.x] = monster->oldChar;
-			display_background_color[monster->oldPosition.y][monster->oldPosition.x] = monster->oldAttribute;
+			if (monster->oldAttribute == MONSTER_COLOR)//if the monster is over other monster
+			{
+				display_background[monster->oldPosition.y][monster->oldPosition.x] = ' ';
+				display_background_color[monster->oldPosition.y][monster->oldPosition.x] = EMPTY_SPACE;
+			}
+			else
+			{
+				display_background[monster->oldPosition.y][monster->oldPosition.x] = monster->oldChar;
+				display_background_color[monster->oldPosition.y][monster->oldPosition.x] = monster->oldAttribute;
+			}
+			
 			signal(displayer_sem);
 			monster->position.y = (monster->position.y - 1) % 25;
 
@@ -905,8 +919,17 @@ void moveMonster(MONSTER *monster)
 			monster->oldPosition.x = monster->position.x;
 
 			wait(displayer_sem);
-			display_background[monster->oldPosition.y][monster->oldPosition.x] = monster->oldChar;
-			display_background_color[monster->oldPosition.y][monster->oldPosition.x] = monster->oldAttribute;
+			if (monster->oldAttribute == MONSTER_COLOR)//if the monster is over other monster
+			{
+				display_background[monster->oldPosition.y][monster->oldPosition.x] = ' ';
+				display_background_color[monster->oldPosition.y][monster->oldPosition.x] = EMPTY_SPACE;
+			}
+			else
+			{
+				display_background[monster->oldPosition.y][monster->oldPosition.x] = monster->oldChar;
+				display_background_color[monster->oldPosition.y][monster->oldPosition.x] = monster->oldAttribute;
+			}
+			
 			signal(displayer_sem);
 
 			monster->position.y = (monster->position.y + 1) % 25;
@@ -1018,7 +1041,6 @@ void lay_egg(int init_egg_laying_position_y, int init_egg_laying_position_x) {
 	}
 
 	sleept(hatch_timer);
-
 	signal(displayer_sem);
 	monsterPosition.x = temp_x;
 	monsterPosition.y = temp_y;
@@ -1754,13 +1776,8 @@ void updateter()
 		{
 			resume(pause_pid = create(pauseinit, INITSTK, INITPRIO + 1, "pause", 0)); // busy wait process pausing all other processes
 		}
-<<<<<<< HEAD
-		
-		else if (scan == 18 && granade_throwen == 0 && display_background_color[chack.position.y][chack.position.x +1 ] != WALL_COLOR &&  display_background_color[chack.position.y][chack.position.x +2 ] != WALL_COLOR)	// 'E' pressed
-=======
 
 		else if (scan == 18 && display_background_color[chack.position.y][chack.position.x + 1] != WALL_COLOR &&  display_background_color[chack.position.y][chack.position.x + 2] != WALL_COLOR)	// 'E' pressed
->>>>>>> fac3d8cf88e0f4020ea6b7899c50602ea76c1e45
 		{
 			granade_throwen = 1;	
 			resume(create(throw_granade, INITSTK, INITPRIO, "Granade", 1, 0)); // Throw granade right.
