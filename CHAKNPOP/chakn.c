@@ -150,7 +150,7 @@ int gno_of_pids;
 
 int timer;		// for use in ckint		to count 30 sec/5 min
 int timer_on;	//for use in clkint
-
+int num_of_hearts = 3;
 int new_stage = 0;					//kill button for monsters and chickens
 int chack_alive = 1;				//chack can die if its 1
 int kill_world = 0;					//shutdown
@@ -628,28 +628,21 @@ void free_heart(int y, int temp_y, int x, int temp_x) {
 
 	if a heart_id has been freed, than it should go up to the ceiling and make a new gate.
 	*/
-	int hole_width = 5;
+	int hole_width = 3;
 	int temp;
 
 	wait(displayer_sem);
 	if (current_stage == 1) {	// first stage cheat, i had to do so, because we cant't go upward in first stage.
-		for (temp = 0; temp <= hole_width; temp++) {
-			display_background_color[23 - temp][79] = nextLevel;
+		for (temp = 0; temp < hole_width ; temp++) {
+			display_background_color[23 - temp][79 - num_of_hearts] = nextLevel;
 		}
 	}
 	else {
-		for (; temp_y >= 0; temp_y--) {
-			// Painting the purpul collumn
-			if (display_background_color[temp_y][temp_x] != WALL_COLOR) {
-				//display_background_color[temp_y][temp_x] = EMPTY_SPACE - 30;
-			}
+		for (temp = 0; temp < hole_width ; temp++) {
+			display_background_color[1+temp][79 - num_of_hearts] = nextLevel;
 		}
-		for (temp = 0; temp <= 2; temp++) {
-			// Painting tha FINNISH_GATE
-			display_background_color[0 + temp][79] = nextLevel;
-		}
-		signal(displayer_sem);
 	}
+	signal(displayer_sem);
 }
 
 
@@ -735,6 +728,7 @@ void throw_granade(int direction) {
 		for (x = -1; x <= 1; x++) {
 			if (display_background_color[temp_y - y][temp_x + x] == HEARTCOLLOR) {
 				free_heart(y, temp_y, x, temp_x);
+				if (num_of_hearts > 0)num_of_hearts--;
 			}
 			display_background_color[temp_y - y][temp_x + x] = GRANADE_SMOKE_COLOR;
 		}
@@ -742,6 +736,7 @@ void throw_granade(int direction) {
 
 	if (display_background_color[temp_y][temp_x - 2] == HEARTCOLLOR || display_background_color[temp_y][temp_x + 2] == HEARTCOLLOR) {
 		free_heart(y, temp_y, x, temp_x);
+		if (num_of_hearts > 0)num_of_hearts--;
 	}
 	monstersKilled = 0;
 	wait(displayer_sem);
@@ -756,7 +751,7 @@ void throw_granade(int direction) {
 	grenade_sound();
 
 	// Ugly busy/wait loop.
-	while (abs(tod - granade_explode_timer) <= 3000) {
+	while (abs(tod - granade_explode_timer) <= 1000) {
 	}
 
 	// Clear granade's smoke.
@@ -774,13 +769,9 @@ void throw_granade(int direction) {
 	display_background_color[temp_y][temp_x - 2] = EMPTY_SPACE;
 	display_background_color[temp_y][temp_x + 2] = EMPTY_SPACE;
 	signal(displayer_sem);
-<<<<<<< HEAD
 	
 	//set granade_throwen to False, because a granade has been thrown and died.
 	granade_throwen = 0;
-=======
-
->>>>>>> fac3d8cf88e0f4020ea6b7899c50602ea76c1e45
 }
 
 
@@ -834,7 +825,7 @@ void moveMonster(MONSTER *monster)
 
 			}
 			wait(displayer_sem);
-			if (monster->oldAttribute == MONSTER_COLOR)
+			if (monster->oldAttribute == MONSTER_COLOR)	
 			{
 				display_background[monster->position.y][monster->position.x] =' ';
 				display_background_color[monster->position.y][monster->position.x] =EMPTY_SPACE;
@@ -1039,12 +1030,30 @@ void move_chicken(CHICKEN *chicken_input) { // move chicken by stage setup.
 	int temp_x;
 	int temp_y;
 
-	if (direction == 0 && display_background_color[chicken->position.y][(chicken->position.x + 1)] != 40)//if its not green wall
+	if (direction == 0){	// chicken is moving left.
+		if (display_background_color[chicken->position.y][(chicken->position.x -1 )] != WALL_COLOR && display_background_color[chicken->position.y][(chicken->position.x -1 )] != nextLevel){//if its not green wall
+			chicken->position.x--;
+		}
+		else{
+			direction =1;
+		}
+	}
+	if (direction == 1){	// chicken is moving left.
+		if (display_background_color[chicken->position.y][(chicken->position.x +1 )] != WALL_COLOR && display_background_color[chicken->position.y][(chicken->position.x +1 )] != nextLevel){//if its not green wall
+			chicken->position.x++;
+		}
+		else{
+			direction =0;
+		}
+	}
+	/*if (direction == 0){
+		// move only left
+	if (display_background_color[chicken->position.y][(chicken->position.x + 1)] != WALL_COLOR)//if its not green wall
 	{
 		chicken->position.x = (chicken->position.x + 1) % 80;
 		if ((chicken->position.x + 1) % 80 == 79)direction = 1;	// change sirection
 	}
-	if (direction == 1 && display_background_color[chicken->position.y][(chicken->position.x - 1)] != 40)//if its not green wall
+	if (direction == 1 && display_background_color[chicken->position.y][(chicken->position.x - 1)] != WALL_COLOR)//if its not green wall
 	{
 		chicken->position.x = (chicken->position.x - 1) % 80;
 		if ((chicken->position.x) == 1)direction = 0;	// change sirection
@@ -1057,6 +1066,7 @@ void move_chicken(CHICKEN *chicken_input) { // move chicken by stage setup.
 	{
 		chicken->position.y = (chicken->position.y + 1) % 25;
 	}
+	*/
 }
 
 void draw_chicken(CHICKEN *chicken_input) {
@@ -1132,7 +1142,13 @@ void print_stage_1() {
 	int hole_size = 5;
 	int number_of_hearts = 3;
 	char str[7];
+	int temp_walls;
+	num_of_hearts = 3;// reset walls counter.
+	temp_walls = num_of_hearts;
 	wait(displayer_sem);
+
+	
+
 	for (i = 0; i < 25; i++)
 	{
 		for (j = 0; j < 80; j++)
@@ -1151,7 +1167,7 @@ void print_stage_1() {
 				}
 
 				else if (j + hole_size > 80 && edge_needed_left == 0 && edge_needed_right == 1) { // set plags for printing right_hole
-					display_background_color[i][j] = EMPTY_SPACE;
+					display_background_color[i][j-4] = EMPTY_SPACE;
 
 				}
 				else {
@@ -1167,24 +1183,35 @@ void print_stage_1() {
 			}
 		}
 		signal(displayer_sem);
-		// Print stage hearts.
-		// heart 1
-		write_string(7, 9, HEARTCOLLOR, "<B");
-
-		// heart 2
-		write_string(15, 55, HEARTCOLLOR, "<B");
-
-		// heart 3
-		write_string(19, 9, HEARTCOLLOR, "<B");
-
-
-		sprintf(str, "LIFE:%d", chack.life);
-		write_string(0, 1, WALL_COLOR, str);
-		write_string(0, 8, WALL_COLOR, chack.name);
-
-
 		drawChack();
 	}
+
+	// paint number of walls as the number of hearts in this stage.
+	for(; number_of_hearts > 0; number_of_hearts--){
+		for (i = 20; i < 25; i++)
+		{	
+			for (j = 76; j < 79; j++)
+			{
+				display_background_color[i][j] = WALL_COLOR;
+			}
+		}
+	}
+
+	// Print stage hearts.
+	// heart 1
+	write_string(7, 9, HEARTCOLLOR, "<B");
+
+	// heart 2
+	write_string(15, 55, HEARTCOLLOR, "<B");
+
+	// heart 3
+	write_string(19, 9, HEARTCOLLOR, "<B");
+
+
+	sprintf(str, "LIFE:%d", chack.life);
+	write_string(0, 1, WALL_COLOR, str);
+	write_string(0, 8, WALL_COLOR, chack.name);
+	
 	send(dispid, 1);
 }
 
@@ -1200,6 +1227,7 @@ void print_stage_2() {
 	int hole_size = 5;
 	int number_of_hearts = 3;
 	char str[7];
+	num_of_hearts = number_of_hearts;
 	wait(displayer_sem);
 	for (i = 0; i < 25; i++)
 	{
@@ -1306,24 +1334,34 @@ void print_stage_2() {
 			display_background_color[i][j] = EMPTY_SPACE;
 		}
 		signal(displayer_sem);
-
-		// Print stage hearts.
-		// heart 1
-		write_string(7, 9, HEARTCOLLOR, "<B");
-
-
-		// heart 2
-		write_string(17, 55, HEARTCOLLOR, "<B");
-
-
-		// heart 3
-		write_string(21, 9, HEARTCOLLOR, "<B");
-
-		sprintf(str, "LIFE:%d", chack.life);
-		write_string(0, 1, WALL_COLOR, str);
-
-		drawChack();
 	}
+	// paint number of walls as the number of hearts in this stage.
+	for(; number_of_hearts > 0; number_of_hearts--){
+		for (i = 0; i < 4; i++)
+		{	
+			for (j = 76; j < 79; j++)
+			{
+				display_background_color[i][j] = WALL_COLOR;
+			}
+		}
+	}
+	// Print stage hearts.
+	// heart 1
+	write_string(4, 9, HEARTCOLLOR, "<B");
+
+
+	// heart 2
+	write_string(17, 55, HEARTCOLLOR, "<B");
+
+
+	// heart 3
+	write_string(21, 9, HEARTCOLLOR, "<B");
+
+	sprintf(str, "LIFE:%d", chack.life);
+	write_string(0, 1, WALL_COLOR, str);
+
+	drawChack();
+
 	send(dispid, 1);
 	resume(platform_2_pid = create(stage_2_platform, INITSTK, INITPRIO, "STAGE2PLAT2", 0));
 }
@@ -1341,6 +1379,8 @@ void print_stage_3() {
 	int hole_size = 5;
 	int number_of_hearts = 3;
 	char str[7];
+	num_of_hearts = number_of_hearts;
+
 	wait(displayer_sem);
 	for (i = 0; i < 25; i++)
 	{
@@ -1446,23 +1486,32 @@ void print_stage_3() {
 
 			display_background_color[i][j] = EMPTY_SPACE;
 		}
-
-		// Print stage hearts.
-		// heart 1
-		write_string(7, 9, HEARTCOLLOR, "<B");
-
-		// heart 2
-		write_string(17, 55, HEARTCOLLOR, "<B");
-
-		// heart 3
-		write_string(21, 9, HEARTCOLLOR, "<B");
-
-		sprintf(str, "LIFE:%d", chack.life);
-		write_string(0, 1, 652, str);
-
-
 		drawChack();
 	}
+	// paint number of walls as the number of hearts in this stage.
+	for(; number_of_hearts > 0; number_of_hearts--){
+		for (i = 0; i < 4; i++)
+		{	
+			for (j = 76; j < 79; j++)
+			{
+				display_background_color[i][j] = WALL_COLOR;
+			}
+		}
+	}
+	// Print stage hearts.
+	// heart 1
+	write_string(4, 9, HEARTCOLLOR, "<B");
+
+	// heart 2
+	write_string(17, 55, HEARTCOLLOR, "<B");
+
+	// heart 3
+	write_string(21, 9, HEARTCOLLOR, "<B");
+
+	sprintf(str, "LIFE:%d", chack.life);
+	write_string(0, 1, 652, str);
+
+
 	signal(displayer_sem);
 	send(dispid, 1);
 	resume(platform_3_pid = create(stage_3_platform, INITSTK, INITPRIO, "STAGE3PLAT1", 0));
@@ -1754,13 +1803,8 @@ void updateter()
 		{
 			resume(pause_pid = create(pauseinit, INITSTK, INITPRIO + 1, "pause", 0)); // busy wait process pausing all other processes
 		}
-<<<<<<< HEAD
 		
 		else if (scan == 18 && granade_throwen == 0 && display_background_color[chack.position.y][chack.position.x +1 ] != WALL_COLOR &&  display_background_color[chack.position.y][chack.position.x +2 ] != WALL_COLOR)	// 'E' pressed
-=======
-
-		else if (scan == 18 && display_background_color[chack.position.y][chack.position.x + 1] != WALL_COLOR &&  display_background_color[chack.position.y][chack.position.x + 2] != WALL_COLOR)	// 'E' pressed
->>>>>>> fac3d8cf88e0f4020ea6b7899c50602ea76c1e45
 		{
 			granade_throwen = 1;	
 			resume(create(throw_granade, INITSTK, INITPRIO, "Granade", 1, 0)); // Throw granade right.
