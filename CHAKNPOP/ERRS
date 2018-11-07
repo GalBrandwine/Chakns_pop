@@ -1,51 +1,49 @@
 Turbo C++ Version 3.00 Copyright (c) 1992 Borland International
 xinu4win\newsrc\gm\chaknpop\chakn.c:
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 215: Parameter 'mdevno' is never used in function new_int9
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 249: Unreachable code in function randDirection
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 252: Unreachable code in function randDirection
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 255: Unreachable code in function randDirection
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 258: Unreachable code in function randDirection
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 260: Function should return a value in function randDirection
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 277: 'str_len' is assigned a value that is never used in function write_string
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 381: Function should return a value in function reduce_life
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 428: Constant out of range in comparison in function moveChack
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 452: Constant out of range in comparison in function moveChack
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 478: Constant out of range in comparison in function moveChack
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 494: Constant out of range in comparison in function moveChack
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 505: Constant out of range in comparison in function moveChack
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 517: Constant out of range in comparison in function moveChack
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 568: Parameter 'y' is never used in function free_heart
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 568: Parameter 'x' is never used in function free_heart
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 593: Constant out of range in comparison in function throw_granade
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 598: Constant out of range in comparison in function throw_granade
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 891: 'falling_speed' is assigned a value that is never used in function lay_egg
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 891: 'fall_tod' is assigned a value that is never used in function lay_egg
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 975: 'stage_level' is assigned a value that is never used in function draw_chicken
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1043: 'number_of_hearts' is assigned a value that is never used in function print_stage_1
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1043: 'hole_flag' is assigned a value that is never used in function print_stage_1
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1043: 'pos' is assigned a value that is never used in function print_stage_1
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1182: 'number_of_hearts' is assigned a value that is never used in function print_stage_2
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1182: 'hole_size' is assigned a value that is never used in function print_stage_2
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1182: 'edge_needed_right' is assigned a value that is never used in function print_stage_2
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1182: 'edge_needed_left' is assigned a value that is never used in function print_stage_2
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1182: 'hole_flag' is assigned a value that is never used in function print_stage_2
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1182: 'pos' is assigned a value that is never used in function print_stage_2
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1323: 'number_of_hearts' is assigned a value that is never used in function print_stage_3
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1323: 'hole_size' is assigned a value that is never used in function print_stage_3
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1323: 'edge_needed_right' is assigned a value that is never used in function print_stage_3
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1323: 'edge_needed_left' is assigned a value that is never used in function print_stage_3
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1323: 'hole_flag' is assigned a value that is never used in function print_stage_3
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1323: 'pos' is assigned a value that is never used in function print_stage_3
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1411: 'hole_flag' is assigned a value that is never used in function print_stage_0
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1411: 'pos' is assigned a value that is never used in function print_stage_0
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1439: 'chicken_pid' is assigned a value that is never used in function stage_1
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1464: 'chicken_pid' is assigned a value that is never used in function stage_2
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1484: 'chicken_pid' is assigned a value that is never used in function stage_3
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1662: Redefinition of 'pause' is not identical
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1675: Unreachable code in function sound
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1676: Void functions may not return a value in function sound
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1709: Nonportable pointer conversion in function xmain
-Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1718: Function should return a value in function xmain
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 236: Parameter 'mdevno' is never used in function new_int9
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 270: Unreachable code in function randDirection
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 273: Unreachable code in function randDirection
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 276: Unreachable code in function randDirection
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 279: Unreachable code in function randDirection
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 281: Function should return a value in function randDirection
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 300: 'str_len' is assigned a value that is never used in function write_string
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 416: Function should return a value in function reduce_life
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 568: Constant out of range in comparison in function moveChack
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 582: Constant out of range in comparison in function moveChack
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 594: Constant out of range in comparison in function moveChack
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 651: Parameter 'y' is never used in function free_heart
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 651: Parameter 'x' is never used in function free_heart
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 679: Constant out of range in comparison in function throw_granade
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 686: Constant out of range in comparison in function throw_granade
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 919: Constant out of range in comparison in function drawMonster
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1014: 'falling_speed' is assigned a value that is never used in function lay_egg
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1014: 'fall_tod' is assigned a value that is never used in function lay_egg
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1101: 'stage_level' is assigned a value that is never used in function draw_chicken
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1170: 'number_of_hearts' is assigned a value that is never used in function print_stage_1
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1170: 'hole_flag' is assigned a value that is never used in function print_stage_1
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1170: 'pos' is assigned a value that is never used in function print_stage_1
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1310: 'number_of_hearts' is assigned a value that is never used in function print_stage_2
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1310: 'hole_size' is assigned a value that is never used in function print_stage_2
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1310: 'edge_needed_right' is assigned a value that is never used in function print_stage_2
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1310: 'edge_needed_left' is assigned a value that is never used in function print_stage_2
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1310: 'hole_flag' is assigned a value that is never used in function print_stage_2
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1310: 'pos' is assigned a value that is never used in function print_stage_2
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1451: 'number_of_hearts' is assigned a value that is never used in function print_stage_3
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1451: 'hole_size' is assigned a value that is never used in function print_stage_3
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1451: 'edge_needed_right' is assigned a value that is never used in function print_stage_3
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1451: 'edge_needed_left' is assigned a value that is never used in function print_stage_3
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1451: 'hole_flag' is assigned a value that is never used in function print_stage_3
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1451: 'pos' is assigned a value that is never used in function print_stage_3
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1552: 'hole_flag' is assigned a value that is never used in function print_stage_0
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1552: 'pos' is assigned a value that is never used in function print_stage_0
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1583: 'chicken_pid' is assigned a value that is never used in function stage_1
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1610: 'chicken_pid' is assigned a value that is never used in function stage_2
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1632: 'chicken_pid' is assigned a value that is never used in function stage_3
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1854: Redefinition of 'pause' is not identical
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1867: Unreachable code in function sound
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1868: Void functions may not return a value in function sound
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1903: Nonportable pointer conversion in function xmain
+Warning xinu4win\newsrc\gm\chaknpop\chakn.c 1913: Function should return a value in function xmain
 Turbo Link  Version 5.0 Copyright (c) 1992 Borland International
 
-	Available memory 4068812
+	Available memory 4055932

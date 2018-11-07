@@ -664,7 +664,10 @@ void throw_granade(int direction) {
 	int granade_explode_timer = tod; // sleep 3 sec before exploding;
 	int temp_x = chack.position.x;
 	int temp_y = chack.position.y;
-
+	int wall_dis_2_flag_right = 0;
+	int wall_dis_1_flag_right = 0;
+	int wall_dis_2_flag_left = 0;
+	int wall_dis_1_flag_left = 0;
 	int y;
 	int x;
 
@@ -709,6 +712,15 @@ void throw_granade(int direction) {
 	display_background[temp_y][temp_x + 1] = '>';
 	display_background[temp_y][temp_x - 1] = '<';
 
+	// Check if theres wallcolor on the right
+	if(display_background_color[temp_y][temp_x + 1] == WALL_COLOR)wall_dis_1_flag_right = 1;
+	if(display_background_color[temp_y][temp_x + 2] == WALL_COLOR)wall_dis_2_flag_right = 1;
+
+	// Check if theres wallcolor on the left
+	if(display_background_color[temp_y][temp_x - 1] == WALL_COLOR)wall_dis_1_flag_left = 1;
+	if(display_background_color[temp_y][temp_x - 2] == WALL_COLOR)wall_dis_2_flag_left = 1;
+
+
 	signal(displayer_sem);
 
 	// Ugly busy/wait loop.
@@ -729,6 +741,7 @@ void throw_granade(int direction) {
 	if (display_background_color[temp_y][temp_x - 2] == HEARTCOLLOR || display_background_color[temp_y][temp_x + 2] == HEARTCOLLOR) {
 		free_heart(y, temp_y, x, temp_x);
 	}
+
 	monstersKilled = 0;
 	wait(displayer_sem);
 	display_background_color[temp_y][temp_x - 2] = GRANADE_SMOKE_COLOR;
@@ -737,6 +750,7 @@ void throw_granade(int direction) {
 	display_background[temp_y][temp_x + 1] = ' ';
 	display_background[temp_y][temp_x - 1] = ' ';
 	signal(displayer_sem);
+	
 	// Reset granade_explode_timer timer;
 	granade_explode_timer = tod;
 	grenade_sound();
@@ -753,6 +767,10 @@ void throw_granade(int direction) {
 	}
 	monstersKilled = 0;
 	wait(displayer_sem);
+	if(wall_dis_1_flag_left == 1)display_background_color[temp_y][temp_x -1] = WALL_COLOR;
+	if(wall_dis_2_flag_left == 1)display_background_color[temp_y][temp_x -2] = WALL_COLOR;
+	if(wall_dis_1_flag_right == 1)display_background_color[temp_y][temp_x +1] = WALL_COLOR;
+	if(wall_dis_2_flag_right == 1)display_background_color[temp_y][temp_x +2] = WALL_COLOR;
 	display_background_color[temp_y][temp_x - 2] = EMPTY_SPACE;
 	display_background_color[temp_y][temp_x + 2] = EMPTY_SPACE;
 	signal(displayer_sem);
