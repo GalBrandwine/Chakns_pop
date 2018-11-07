@@ -418,7 +418,7 @@ reduce_life() {
 void kill_chack() {
 	if (invincible == 0)// chack is invincible for 30 seconds if grenade kill 2 monsters
 	{
-		if ((display_background_color[chack.position.y][chack.position.x] == GRANADE_SMOKE_COLOR || kill_monster == 1) && chack_alive == 1) {				//kill chack
+		if ((display_background_color[chack.position.y][chack.position.x] == GRANADE_SMOKE_COLOR || kill_monster == 1 || display_background_color[chack.position.y][chack.position.x]==MONSTER_COLOR) && chack_alive == 1) {				//kill chack
 			chack_alive = 0;
 			if (display_background_color[chack.position.y][chack.position.x] == GRANADE_SMOKE_COLOR)
 			{
@@ -775,7 +775,7 @@ void moveMonster(MONSTER *monster)
 	case 'R'://move  right
 		if ((display_background_color[monster->position.y][(monster->position.x + 1)] != WALL_COLOR))
 		{
-			if (monster->position.x == chack.position.x && monster->position.y == chack.position.y) {
+			if (monster->position.x + 1 == chack.position.x && monster->position.y == chack.position.y) {
 				kill_monster = 1;
 				kill_chack();
 
@@ -804,7 +804,7 @@ void moveMonster(MONSTER *monster)
 	case 'L'://move left
 		if ((display_background_color[monster->position.y][(monster->position.x - 1)] != WALL_COLOR))
 		{
-			if (monster->position.x == chack.position.x && monster->position.y == chack.position.y) {
+			if (monster->position.x - 1 == chack.position.x && monster->position.y == chack.position.y) {
 				kill_monster = 1;
 				kill_chack();
 
@@ -832,7 +832,7 @@ void moveMonster(MONSTER *monster)
 	case 'U'://move up
 		if ((display_background_color[monster->position.y - 1][(monster->position.x)] != WALL_COLOR))
 		{
-			if (monster->position.x == chack.position.x && monster->position.y == chack.position.y) {
+			if (monster->position.x == chack.position.x && monster->position.y - 1 == chack.position.y) {
 				kill_monster = 1;
 				kill_chack();
 
@@ -861,7 +861,7 @@ void moveMonster(MONSTER *monster)
 	case 'D'://move down
 		if ((display_background_color[monster->position.y + 1][(monster->position.x)] != WALL_COLOR))
 		{
-			if (monster->position.x == chack.position.x && monster->position.y == chack.position.y) {
+			if (monster->position.x == chack.position.x && monster->position.y + 1 == chack.position.y) {
 				kill_monster = 1;
 				kill_chack();
 
@@ -895,6 +895,7 @@ void drawMonster(MONSTER *monster)
 	int time_counter = tod;
 	int changeSpeedIndicator = tod;
 	int moveFrequency = 1400;
+	int my_stage = current_stage;
 	while (1)
 	{
 		if ( (current_stage == 2) && (abs(tod - changeSpeedIndicator) >= 60000))//in stage two every minute the monster speed will increase cy 20%
@@ -919,7 +920,8 @@ void drawMonster(MONSTER *monster)
 				monstersKilled++;
 				kill(getpid());
 			}
-			if (new_stage == 1) {
+			if (new_stage == 1 || current_stage != my_stage ) {	
+				write_string(monster->position.y, monster->position.x, EMPTY_SPACE, " ");
 				kill(getpid());
 			}
 
@@ -1441,7 +1443,7 @@ void platform(int min,int max,int hight,int movment,int left,int my_num){	//comm
 		max_mov = movment;
 	}
 	while (1) {
-		if((stage2plat==0 && my_num==2) ||(stage3plat==0 && my_num==3)){	// the platform will die naturally
+		if((stage2plat==0 && my_num==2) ||(stage3plat==0 && my_num==3) || (chack.life==0)){	// the platform will die naturally
 			return;
 		}
 		if (abs(tod - plat_tod) >= 1000) {
