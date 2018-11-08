@@ -1097,7 +1097,7 @@ void move_chicken(CHICKEN *chicken_input) { // move chicken by stage setup.
 void draw_chicken(CHICKEN *chicken_input) {
 	CHICKEN *chicken = chicken_input;	// initiated chicken;
 										// TODO: make that array ina the size of (chicken->level)*3
-	int eggs_layed = chicken->level * 3;
+	int eggs_layed = chicken->level + 3;
 	int lay_egg_flag = 1;				// laying egg flag;
 	int stage_level = 250;				// lay egg every 2.5 sec
 	int init_egg_laying_position_y = chicken->position.y + 1;
@@ -1545,10 +1545,9 @@ void print_stage_3() {
 
 
 void platform(int min, int max, int hight, int movment, int left, int my_num) {	//comments below
-	int plat_tod;
+	
 	int go_back = left;
 	int max_mov = 0;
-	plat_tod = tod;
 
 	if (left == 1) {
 		max_mov = movment;
@@ -1557,7 +1556,7 @@ void platform(int min, int max, int hight, int movment, int left, int my_num) {	
 		if ((stage2plat == 0 && my_num == 2) || (stage3plat == 0 && my_num == 3) || (chack.life == 0)) {	// the platform will die naturally
 			return;
 		}
-		if (abs(tod - plat_tod) >= 1000) {
+			sleept(1500); //wait 1.5 sec before each platform movment
 			wait(displayer_sem);
 			if (go_back == 0) {
 				display_background_color[hight][min] = EMPTY_SPACE;
@@ -1584,9 +1583,7 @@ void platform(int min, int max, int hight, int movment, int left, int my_num) {	
 				min++;
 				max++;
 			}
-			plat_tod = tod;
 			send(dispid, 1);
-		}
 	}
 }
 
@@ -1812,8 +1809,9 @@ void updateter()
 	{
 		pressed = receive();
 		scan = pressed;
-		if (kill_world == 1)	//kill the level gg
+		if (kill_world == 1){	//kill the level gg
 			kill(getpid());
+			}
 		if ((scan == 30)) // 'A' pressed
 			moveChack('L');
 		else if ((scan == 32)) // 'D' pressed
